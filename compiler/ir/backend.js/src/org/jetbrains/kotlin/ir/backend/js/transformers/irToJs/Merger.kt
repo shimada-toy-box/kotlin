@@ -159,9 +159,10 @@ class Merger(
 
         linkJsNames()
 
-        val moduleBody = mutableListOf<JsStatement>().also {
-            if (!generateScriptModule) it += JsStringLiteral("use strict").makeStmt()
-        }
+        val moduleBody = mutableListOf<JsStatement>()
+
+        val polyfills = JsPolyfillsVisitor(generateRegionComments)
+            .apply { fragments.forEach { mergeWith(it.polyfills) } }
 
         val preDeclarationBlock = JsGlobalBlock()
         val postDeclarationBlock = JsGlobalBlock()
@@ -209,13 +210,18 @@ class Merger(
         val importedJsModules = this.importedModulesMap.values.toList() + this.crossModuleReferences.importedModules
         val importStatements = this.importStatements.values.toList()
 
-        val program = JsProgram()
+        val program = JsProgram().apply {
+            polyfills.addAllNeededPolyfillsTo(globalBlock.statements)
+        }
 
         if (generateScriptModule) {
             with(program.globalBlock) {
-                this.statements.addWithComment("block: imports", importStatements)
-                this.statements += moduleBody
-                this.statements.addWithComment("block: exports", exportStatements)
+                if (!generateScriptModule) {
+                    statements += JsStringLiteral("use strict").makeStmt()
+                }
+                statements.addWithComment("block: imports", importStatements)
+                statements += moduleBody
+                statements.addWithComment("block: exports", exportStatements)
             }
         } else {
             val internalModuleName = ReservedJsNames.makeInternalModuleName()
@@ -223,9 +229,12 @@ class Merger(
                 parameters += JsParameter(internalModuleName)
                 parameters += (importedJsModules).map { JsParameter(it.internalName) }
                 with(body) {
-                    this.statements.addWithComment("block: imports", importStatements)
-                    this.statements += moduleBody
-                    this.statements.addWithComment("block: exports", exportStatements)
+                    if (!generateScriptModule) {
+                        statements += JsStringLiteral("use strict").makeStmt()
+                    }
+                    statements.addWithComment("block: imports", importStatements)
+                    statements += moduleBody
+                    statements.addWithComment("block: exports", exportStatements)
                     if (generateCallToMain) {
                         callToMain?.let { this.statements += it }
                     }
