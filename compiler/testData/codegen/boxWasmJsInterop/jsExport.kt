@@ -25,6 +25,15 @@ fun anyAsEI(any: Any): EI = any as EI
 
 fun box(): String = "OK"
 
+// TODO: Rewrite test to use module system
+
+@JsFun("() => { globalThis.main = exports; }")
+external fun hackNonModuleExport()
+
+fun main() {
+    hackNonModuleExport()
+}
+
 // FILE: jsExport__after.js
 
 const c = main.makeC(300);
