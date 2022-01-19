@@ -143,8 +143,12 @@ internal val buildAdditionalCacheInfoPhase = konanUnitPhase(
                             declaration.acceptChildrenVoid(this)
 
                             if (!declaration.isInterface && declaration.visibility != DescriptorVisibilities.LOCAL
-                                    && declaration.isExported && declaration.origin != DECLARATION_ORIGIN_FUNCTION_CLASS)
-                                classFields.add(moduleDeserializer.buildClassFields(declaration, getLayoutBuilder(declaration).getDeclaredFields()))
+                                    && declaration.isExported && declaration.origin != DECLARATION_ORIGIN_FUNCTION_CLASS
+                            ) {
+                                classFields.add(
+                                    moduleDeserializer.buildClassFields(declaration, getLayoutBuilder(declaration).getDeclaredFields())
+                                )
+                            }
                         }
 
                         override fun visitFunction(declaration: IrFunction) {
@@ -224,7 +228,13 @@ internal val serializerPhase = konanUnitPhase(
 
             serializedIr = irModule?.let { ir ->
                 KonanIrModuleSerializer(
-                    messageLogger, ir.irBuiltins, expectDescriptorToSymbol, skipExpects = !expectActualLinker, compatibilityMode = CompatibilityMode.CURRENT, normalizeAbsolutePaths = normalizeAbsolutePaths, sourceBaseDirs = relativePathBase
+                    messageLogger,
+                    ir.irBuiltins,
+                    expectDescriptorToSymbol,
+                    skipExpects = !expectActualLinker,
+                    compatibilityMode = CompatibilityMode.CURRENT,
+                    normalizeAbsolutePaths = normalizeAbsolutePaths,
+                    sourceBaseDirs = relativePathBase
                 ).serializedIrModule(ir)
             }
 
@@ -315,7 +325,12 @@ internal val dependenciesLowerPhase = NamedCompilerPhase(
         description = "Lower library's IR",
         prerequisite = emptySet(),
         lower = object : CompilerPhase<Context, IrModuleFragment, IrModuleFragment> {
-            override fun invoke(phaseConfig: PhaseConfig, phaserState: PhaserState<IrModuleFragment>, context: Context, input: IrModuleFragment): IrModuleFragment {
+            override fun invoke(
+                phaseConfig: PhaseConfig,
+                phaserState: PhaserState<IrModuleFragment>,
+                context: Context,
+                input: IrModuleFragment
+            ): IrModuleFragment {
                 val files = mutableListOf<IrFile>()
                 files += input.files
                 input.files.clear()
@@ -450,7 +465,14 @@ internal val useInternalAbiPhase = makeKonanModuleOpPhase(
                             context.internalAbi.reference(it, irClass.module)
                         }
                     }
-                    return IrCallImpl(expression.startOffset, expression.endOffset, expression.type, accessor.symbol, accessor.typeParameters.size, accessor.valueParameters.size)
+                    return IrCallImpl(
+                        expression.startOffset,
+                        expression.endOffset,
+                        expression.type,
+                        accessor.symbol,
+                        accessor.typeParameters.size,
+                        accessor.valueParameters.size
+                    )
                 }
 
                 override fun visitGetField(expression: IrGetField): IrExpression {
