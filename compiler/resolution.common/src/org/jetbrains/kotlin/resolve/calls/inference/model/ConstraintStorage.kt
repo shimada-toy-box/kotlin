@@ -93,8 +93,9 @@ class Constraint(
     fun matches(other: Constraint): Boolean {
         return when {
             isNullabilityConstraint != other.isNullabilityConstraint -> false
-            originalTypeForFlexibleVariable != null && originalTypeForFlexibleVariable == other.originalTypeForFlexibleVariable -> true
-            else -> typeHashCode == other.typeHashCode && type == other.type
+            typeHashCode == other.typeHashCode && type == other.type -> true
+            originalTypeForFlexibleVariable != null -> originalTypeForFlexibleVariable == other.originalTypeForFlexibleVariable
+            else -> false
         }
     }
 
