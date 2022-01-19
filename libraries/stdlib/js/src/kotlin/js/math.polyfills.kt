@@ -5,13 +5,13 @@
 
 @file:JsQualifier("Math")
 package kotlin.js
-
 // ES6 Math polyfills
-// All of the presented polyfills were taken from "libraries/stdlib/js-v1/src/js/polyfills.js"
+// Inverse hyperbolic function implementations derived from boost special math functions,
+// Copyright Eric Ford & Hubert Holin 2001.
 
 @PublishedApi
 @JsName("sign")
-@JsNativeImplementation("""
+@JsPolyfill("""
 if (typeof Math.sign === "undefined") {
     Math.sign = function(x) {
         x = +x; // convert to a number
@@ -26,7 +26,7 @@ internal external fun nativeSign(value: Number): Double
 
 @PublishedApi
 @JsName("trunc")
-@JsNativeImplementation("""
+@JsPolyfill("""
 if (typeof Math.trunc === "undefined") {
     Math.trunc = function(x) {
         if (isNaN(x)) {
@@ -43,7 +43,7 @@ internal external fun nativeTrunc(value: Number): Double
 
 @PublishedApi
 @JsName("sinh")
-@JsNativeImplementation("""
+@JsPolyfill("""
 if (typeof Math.sinh === "undefined") {
     $defineTaylorNBound
     Math.sinh = function(x) {
@@ -67,7 +67,7 @@ internal external fun nativeSinh(value: Double): Double
 
 @PublishedApi
 @JsName("cosh")
-@JsNativeImplementation("""
+@JsPolyfill("""
 if (typeof Math.cosh === "undefined") {
     Math.cosh = function(x) {
         var y = Math.exp(x);
@@ -81,7 +81,7 @@ internal external fun nativeCosh(value: Double): Double
 
 @PublishedApi
 @JsName("tanh")
-@JsNativeImplementation("""
+@JsPolyfill("""
 if (typeof Math.tanh === "undefined") {
     $defineTaylorNBound
     Math.tanh = function(x){
@@ -101,12 +101,9 @@ if (typeof Math.tanh === "undefined") {
 """)
 internal external fun nativeTanh(value: Double): Double
 
-// Inverse hyperbolic function implementations derived from boost special math functions,
-// Copyright Eric Ford & Hubert Holin 2001.
-
 @PublishedApi
 @JsName("asinh")
-@JsNativeImplementation("""
+@JsPolyfill("""
 if (typeof Math.asinh === "undefined") {
     $defineUpperTaylorNBound
     var asinh = function(x) {
@@ -154,7 +151,7 @@ internal external fun nativeAsinh(value: Double): Double
 
 @PublishedApi
 @JsName("acosh")
-@JsNativeImplementation("""
+@JsPolyfill("""
 if (typeof Math.acosh === "undefined") {
     $defineUpperTaylor2Bound
     Math.acosh = function(x) {
@@ -195,7 +192,7 @@ internal external fun nativeAcosh(value: Double): Double
 
 @PublishedApi
 @JsName("atanh")
-@JsNativeImplementation("""
+@JsPolyfill("""
 if (typeof Math.atanh === "undefined") {
     $defineTaylorNBound
     Math.atanh = function(x) {
@@ -214,7 +211,7 @@ internal external fun nativeAtanh(value: Double): Double
 
 @PublishedApi
 @JsName("log1p")
-@JsNativeImplementation("""
+@JsPolyfill("""
 if (typeof Math.log1p === "undefined") {
     $defineTaylorNBound
     Math.log1p = function(x) {
@@ -233,7 +230,7 @@ internal external fun nativeLog1p(value: Double): Double
 
 @PublishedApi
 @JsName("expm1")
-@JsNativeImplementation("""
+@JsPolyfill("""
 if (typeof Math.expm1 === "undefined") {
     $defineTaylorNBound
     Math.expm1 = function(x) {
@@ -252,7 +249,7 @@ internal external fun nativeExpm1(value: Double): Double
 
 @PublishedApi
 @JsName("hypot")
-@JsNativeImplementation("""
+@JsPolyfill("""
 if (typeof Math.hypot === "undefined") {
     Math.hypot = function() {
         var y = 0;
@@ -273,7 +270,7 @@ internal external fun nativeHypot(x: Double, y: Double): Double
 
 @PublishedApi
 @JsName("log10")
-@JsNativeImplementation("""
+@JsPolyfill("""
 if (typeof Math.log10 === "undefined") {
     Math.log10 = function(x) {
         return Math.log(x) * Math.LOG10E;
@@ -284,7 +281,7 @@ internal external fun nativeLog10(value: Double): Double
 
 @PublishedApi
 @JsName("log2")
-@JsNativeImplementation("""
+@JsPolyfill("""
 if (typeof Math.log2 === "undefined") {
     Math.log2 = function(x) {
         return Math.log(x) * Math.LOG2E;
@@ -295,7 +292,7 @@ internal external fun nativeLog2(value: Double): Double
 
 @PublishedApi
 @JsName("clz32")
-@JsNativeImplementation("""
+@JsPolyfill("""
 if (typeof Math.clz32 === "undefined") {
     Math.clz32 = (function(log, LN2) {
         return function(x) {

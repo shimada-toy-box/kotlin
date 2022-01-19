@@ -7,7 +7,7 @@ package kotlin.js
 
 @PublishedApi
 @Suppress("NOTHING_TO_INLINE")
-@JsNativeImplementation("""
+@JsPolyfill("""
 [Int8Array, Int16Array, Uint16Array, Int32Array, Float32Array, Float64Array].forEach(function (TypedArray) {
     if (typeof TypedArray.prototype.sort === "undefined") {
         Object.defineProperty(TypedArray.prototype, 'sort', {

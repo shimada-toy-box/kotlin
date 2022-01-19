@@ -59,7 +59,7 @@ private fun IrDeclaration.addRootsTo(to: MutableCollection<IrDeclaration>, conte
                 else -> null
             }
 
-            if (!hasJsNativeImplementation() && correspondingProperty?.hasJsNativeImplementation() != true) {
+            if (!hasJsPolyfill() && correspondingProperty?.hasJsPolyfill() != true) {
                 to += this
             }
         }
@@ -308,7 +308,7 @@ fun usefulDeclarations(
                 }
 
                 override fun visitDeclaration(declaration: IrDeclarationBase) {
-                    if (declaration.hasJsNativeImplementation()) return
+                    if (declaration.hasJsPolyfill()) return
                     if (declaration !== it) declaration.enqueue(it, "roots' nested declaration")
                     super.visitDeclaration(declaration)
                 }
@@ -400,7 +400,7 @@ fun usefulDeclarations(
 
                     if (
                         field.origin == IrDeclarationOrigin.PROPERTY_BACKING_FIELD &&
-                        correspondingProperty.hasJsNativeImplementation()
+                        correspondingProperty.hasJsPolyfill()
                     ) {
                         correspondingProperty.enqueue(field, "property backing field")
                     }

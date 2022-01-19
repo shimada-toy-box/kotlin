@@ -7,7 +7,7 @@
 package kotlin.js
 
 @JsName("isView")
-@JsNativeImplementation("""
+@JsPolyfill("""
 if (typeof ArrayBuffer.isView === "undefined") {
     ArrayBuffer.isView = function(a) {
         return a != null && a.__proto__ != null && a.__proto__.__proto__ === Int8Array.prototype.__proto__;

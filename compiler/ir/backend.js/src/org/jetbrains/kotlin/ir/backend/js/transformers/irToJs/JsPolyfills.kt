@@ -5,8 +5,8 @@
 
 package org.jetbrains.kotlin.ir.backend.js.transformers.irToJs
 
-import org.jetbrains.kotlin.ir.backend.js.utils.getJsNativeImplementation
-import org.jetbrains.kotlin.ir.backend.js.utils.hasJsNativeImplementation
+import org.jetbrains.kotlin.ir.backend.js.utils.getJsPolyfill
+import org.jetbrains.kotlin.ir.backend.js.utils.hasJsPolyfill
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.js.backend.ast.JsCode
 import org.jetbrains.kotlin.js.backend.ast.JsStatement
@@ -15,7 +15,7 @@ class JsPolyfills {
     private val polyfillsPerFile = hashMapOf<IrFile, HashSet<IrDeclaration>>()
 
     fun registerDeclarationNativeImplementation(file: IrFile, declaration: IrDeclaration) {
-        if (!declaration.hasJsNativeImplementation()) return
+        if (!declaration.hasJsPolyfill()) return
         val declarations = polyfillsPerFile[file] ?: hashSetOf()
         declarations.add(declaration)
         polyfillsPerFile[file] = declarations
@@ -33,7 +33,7 @@ class JsPolyfills {
         asSequence().asImplementationList()
 
     private fun Sequence<IrDeclaration>.asImplementationList(): List<JsCode> =
-        map { it.getJsNativeImplementation()!! }
+        map { it.getJsPolyfill()!! }
             .distinct()
             .map { JsCode(it) }
             .toList()

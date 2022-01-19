@@ -7,7 +7,7 @@ package kotlin.js
 
 @PublishedApi
 @Suppress("NOTHING_TO_INLINE")
-@JsNativeImplementation("""
+@JsPolyfill("""
 if (typeof Array.prototype.fill === "undefined") {
     // Polyfill from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/fill#Polyfill
     Object.defineProperty(Array.prototype, 'fill', {
