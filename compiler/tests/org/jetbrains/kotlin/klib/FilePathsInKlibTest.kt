@@ -148,7 +148,7 @@ class FilePathsInKlibTest : CodegenTestCase() {
             val moduleAPaths = artifact.loadKlibFilePaths().map { it.replace("/", File.separator) }
             val dirAPaths = workingDirFile.listFiles { _, name -> name.endsWith(".kt") }!!.map { it.relativeTo(workingDirFile).path }
 
-            assertSameElements(dirAPaths, moduleAPaths)
+            assertSameElements(moduleAPaths, dirAPaths)
         } finally {
             workingDirFile.deleteRecursively()
         }
