@@ -33380,6 +33380,12 @@ public class FirOldFrontendDiagnosticsTestGenerated extends AbstractFirDiagnosti
         }
 
         @Test
+        @TestMetadata("immutableName.kt")
+        public void testImmutableName() throws Exception {
+            runTest("compiler/testData/diagnostics/testsWithStdLib/immutableName.kt");
+        }
+
+        @Test
         @TestMetadata("implicitCastToAny.kt")
         public void testImplicitCastToAny() throws Exception {
             runTest("compiler/testData/diagnostics/testsWithStdLib/implicitCastToAny.kt");

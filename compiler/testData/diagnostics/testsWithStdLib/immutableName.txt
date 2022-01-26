@@ -1,0 +1,42 @@
+package
+
+public interface PsiNamedElement {
+    public open override /*1*/ /*fake_override*/ fun equals(/*0*/ other: kotlin.Any?): kotlin.Boolean
+    public abstract fun getImmutableName(): kotlin.String!
+    @org.jetbrains.annotations.Nullable public abstract fun getName(): kotlin.String?
+    public open override /*1*/ /*fake_override*/ fun hashCode(): kotlin.Int
+    public abstract fun setName(/*0*/ @org.jetbrains.annotations.NotNull name: kotlin.String): PsiNamedElement!
+    public open override /*1*/ /*fake_override*/ fun toString(): kotlin.String
+}
+
+public interface SwiftArgument : PsiNamedElement {
+    public open override /*1*/ /*fake_override*/ fun equals(/*0*/ other: kotlin.Any?): kotlin.Boolean
+    public abstract override /*1*/ /*fake_override*/ fun getImmutableName(): kotlin.String!
+    @org.jetbrains.annotations.Nullable public abstract override /*1*/ /*fake_override*/ fun getName(): kotlin.String?
+    public open override /*1*/ /*fake_override*/ fun hashCode(): kotlin.Int
+    @java.lang.Override @org.jetbrains.annotations.NotNull public abstract override /*1*/ fun setName(/*0*/ @org.jetbrains.annotations.Nullable name: kotlin.String!): SwiftArgument
+    public open override /*1*/ /*fake_override*/ fun toString(): kotlin.String
+}
+
+public abstract class SwiftArgumentImpl : SwiftNamedElementImpl, SwiftArgument {
+    public constructor SwiftArgumentImpl()
+    public final override /*1*/ /*fake_override*/ fun clearName(): kotlin.Unit
+    public open override /*2*/ /*fake_override*/ fun equals(/*0*/ other: kotlin.Any?): kotlin.Boolean
+    public abstract override /*2*/ /*fake_override*/ fun getImmutableName(): kotlin.String!
+    public open override /*2*/ /*fake_override*/ fun getName(): kotlin.String?
+    public open override /*2*/ /*fake_override*/ fun hashCode(): kotlin.Int
+    public open override /*1*/ /*fake_override*/ fun setName(/*0*/ name: kotlin.String): PsiNamedElement
+    public abstract override /*1*/ fun setName(/*0*/ name: kotlin.String?): SwiftArgument
+    public open override /*2*/ /*fake_override*/ fun toString(): kotlin.String
+}
+
+public abstract class SwiftNamedElementImpl : PsiNamedElement {
+    public constructor SwiftNamedElementImpl()
+    public final fun clearName(): kotlin.Unit
+    public open override /*1*/ /*fake_override*/ fun equals(/*0*/ other: kotlin.Any?): kotlin.Boolean
+    public abstract override /*1*/ /*fake_override*/ fun getImmutableName(): kotlin.String!
+    public open override /*1*/ fun getName(): kotlin.String?
+    public open override /*1*/ /*fake_override*/ fun hashCode(): kotlin.Int
+    public open override /*1*/ fun setName(/*0*/ name: kotlin.String): PsiNamedElement
+    public open override /*1*/ /*fake_override*/ fun toString(): kotlin.String
+}
