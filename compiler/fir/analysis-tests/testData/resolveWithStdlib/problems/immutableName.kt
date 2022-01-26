@@ -8,6 +8,8 @@ public interface PsiNamedElement {
     String getName();
 
     PsiNamedElement setName(@NotNull String name);
+
+    String getImmutableName();
 }
 
 // FILE: SwiftArgument.java
@@ -27,6 +29,11 @@ abstract class SwiftNamedElementImpl : PsiNamedElement {
 
     override fun setName(name: String): PsiNamedElement {
         return this
+    }
+
+    fun clearName() {
+        this.name = "" // Ok in FIR, error in FE 1.0
+        this.<!VAL_REASSIGNMENT!>immutableName<!> = ""
     }
 }
 
