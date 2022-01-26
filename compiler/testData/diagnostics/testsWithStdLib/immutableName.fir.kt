@@ -39,6 +39,9 @@ abstract class SwiftNamedElementImpl : PsiNamedElement {
 
 // FILE: SwiftArgumentImpl.kt
 
-abstract <!RETURN_TYPE_MISMATCH_ON_INHERITANCE!>class SwiftArgumentImpl<!> : SwiftNamedElementImpl(), SwiftArgument {
-    abstract <!NOTHING_TO_OVERRIDE!>override<!> fun setName(name: String?): SwiftArgument
+abstract class SwiftArgumentImpl : SwiftNamedElementImpl(), SwiftArgument {
+}
+
+class ImplImpl : SwiftArgumentImpl() {
+    abstract override fun setName(name: String?): SwiftArgument
 }
