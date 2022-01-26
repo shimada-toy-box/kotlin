@@ -12,6 +12,11 @@ FILE: SwiftNamedElementImpl.kt
             ^setName this@R|/SwiftNamedElementImpl|
         }
 
+        public final fun clearName(): R|kotlin/Unit| {
+            this@R|/SwiftNamedElementImpl|.R|/SwiftNamedElementImpl.name| = String()
+            this@R|/SwiftNamedElementImpl|.R|/PsiNamedElement.immutableName| = String()
+        }
+
     }
 FILE: SwiftArgumentImpl.kt
     public abstract class SwiftArgumentImpl : R|SwiftNamedElementImpl|, R|SwiftArgument| {
