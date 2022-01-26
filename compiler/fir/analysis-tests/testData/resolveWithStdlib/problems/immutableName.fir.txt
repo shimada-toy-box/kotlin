@@ -1,0 +1,24 @@
+FILE: SwiftNamedElementImpl.kt
+    public abstract class SwiftNamedElementImpl : R|PsiNamedElement| {
+        public constructor(): R|SwiftNamedElementImpl| {
+            super<R|kotlin/Any|>()
+        }
+
+        public open override fun getName(): R|kotlin/String?| {
+            ^getName Null(null)
+        }
+
+        public open override fun setName(name: R|kotlin/String|): R|PsiNamedElement| {
+            ^setName this@R|/SwiftNamedElementImpl|
+        }
+
+    }
+FILE: SwiftArgumentImpl.kt
+    public abstract class SwiftArgumentImpl : R|SwiftNamedElementImpl|, R|SwiftArgument| {
+        public constructor(): R|SwiftArgumentImpl| {
+            super<R|SwiftNamedElementImpl|>()
+        }
+
+        public abstract override fun setName(name: R|kotlin/String?|): R|SwiftArgument|
+
+    }
