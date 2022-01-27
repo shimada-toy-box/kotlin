@@ -1,0 +1,19 @@
+FILE: test.kt
+    public abstract class NN : R|Base| {
+        public constructor(): R|NN| {
+            super<R|kotlin/Any|>()
+        }
+
+        public open override fun update(param: R|kotlin/String|): R|kotlin/Unit| {
+        }
+
+    }
+    public final class Diamond : R|Derived|, R|NN| {
+        public constructor(): R|Diamond| {
+            super<R|NN|>()
+        }
+
+    }
+    public final fun test(d: R|Diamond|, s: R|kotlin/String?|): R|kotlin/Unit| {
+        R|<local>/d|.<Inapplicable(INAPPLICABLE): /NN.update>#(R|<local>/s|)
+    }

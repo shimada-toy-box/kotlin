@@ -5790,6 +5790,12 @@ public class DiagnosisCompilerFirTestdataTestGenerated extends AbstractDiagnosis
             }
 
             @Test
+            @TestMetadata("daoUpdate.kt")
+            public void testDaoUpdate() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/problems/daoUpdate.kt");
+            }
+
+            @Test
             @TestMetadata("DeepCopyIrTree.kt")
             public void testDeepCopyIrTree() throws Exception {
                 runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/problems/DeepCopyIrTree.kt");
