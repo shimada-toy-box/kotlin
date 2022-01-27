@@ -5790,6 +5790,12 @@ public class FirDiagnosticsWithLightTreeTestGenerated extends AbstractFirDiagnos
             }
 
             @Test
+            @TestMetadata("changesProcessor.kt")
+            public void testChangesProcessor() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/problems/changesProcessor.kt");
+            }
+
+            @Test
             @TestMetadata("daoUpdate.kt")
             public void testDaoUpdate() throws Exception {
                 runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/problems/daoUpdate.kt");
