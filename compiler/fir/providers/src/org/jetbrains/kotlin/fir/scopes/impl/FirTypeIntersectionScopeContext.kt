@@ -112,7 +112,7 @@ class FirTypeIntersectionScopeContext(
     }
 
     fun collectFunctions(name: Name): List<ResultOfIntersection<FirNamedFunctionSymbol>> {
-        return collectCallables(name, FirScope::processFunctionsByName)
+        return collectCallables(name, isForIntersectionScope = false, FirScope::processFunctionsByName)
     }
 
     @OptIn(PrivateForInline::class)
@@ -137,13 +137,15 @@ class FirTypeIntersectionScopeContext(
     @OptIn(PrivateForInline::class)
     inline fun <D : FirCallableSymbol<*>> collectCallables(
         name: Name,
+        isForIntersectionScope: Boolean,
         processCallables: FirScope.(Name, (D) -> Unit) -> Unit
     ): List<ResultOfIntersection<D>> {
-        return collectCallablesImpl(collectMembersByScope(name, processCallables))
+        return collectCallablesImpl(collectMembersByScope(name, processCallables), isForIntersectionScope)
     }
 
     fun <D : FirCallableSymbol<*>> collectCallablesImpl(
-        membersByScope: List<Pair<FirTypeScope, List<D>>>
+        membersByScope: List<Pair<FirTypeScope, List<D>>>,
+        isForIntersectionScope: Boolean
     ): List<ResultOfIntersection<D>> {
         if (membersByScope.isEmpty()) {
             return emptyList()
@@ -165,7 +167,9 @@ class FirTypeIntersectionScopeContext(
             val extractedOverrides = extractBothWaysWithPrivate.filterNotTo(mutableListOf()) {
                 Visibilities.isPrivate((it.member.fir as FirMemberDeclaration).visibility)
             }.takeIf { it.isNotEmpty() } ?: extractBothWaysWithPrivate
-            val baseMembersForIntersection = extractedOverrides.calcBaseMembersForIntersectionOverride()
+            val baseMembersForIntersection = extractedOverrides.calcBaseMembersForIntersectionOverride(
+                removeBaseMembers = isForIntersectionScope
+            )
             if (baseMembersForIntersection.size > 1) {
                 val (mostSpecific, scopeForMostSpecific) = selectMostSpecificMember(baseMembersForIntersection)
                 val intersectionOverrideContext = ContextForIntersectionOverrideConstruction(
@@ -209,7 +213,9 @@ class FirTypeIntersectionScopeContext(
         }.withScope(scopeForMostSpecific)
     }
 
-    private fun <S : FirCallableSymbol<*>> List<MemberWithBaseScope<S>>.calcBaseMembersForIntersectionOverride(): List<MemberWithBaseScope<S>> {
+    private fun <S : FirCallableSymbol<*>> List<MemberWithBaseScope<S>>.calcBaseMembersForIntersectionOverride(
+        removeBaseMembers: Boolean
+    ): List<MemberWithBaseScope<S>> {
         if (size == 1) return this
         val unwrappedMemberSet = mutableSetOf<MemberWithBaseScope<S>>()
         for ((member, scope) in this) {
@@ -245,7 +251,9 @@ class FirTypeIntersectionScopeContext(
             }
         }
         val result = this.toMutableList()
-        //result.removeIf { (member, _) -> member.fir.unwrapSubstitutionOverrides().symbol in baseMembers }
+        if (removeBaseMembers) {
+            result.removeIf { (member, _) -> member.fir.unwrapSubstitutionOverrides().symbol in baseMembers }
+        }
         return result
     }
 
