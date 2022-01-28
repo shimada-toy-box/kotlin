@@ -71,9 +71,7 @@ class FirClassUseSiteMemberScope(
         }
 
         val fields = mutableListOf<FirFieldSymbol>()
-        val properties = supertypeScopeContext.collectCallables<FirPropertySymbol>(
-            name, isForIntersectionScope = false
-        ) { propertyName, processor ->
+        val properties = supertypeScopeContext.collectCallables<FirPropertySymbol>(name) { propertyName, processor ->
             processPropertiesByName(propertyName) {
                 when (it) {
                     is FirPropertySymbol -> processor(it)

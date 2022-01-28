@@ -120,7 +120,7 @@ class JavaClassUseSiteMemberScope(
          * 2. Field from some java superclass (only one, if class have more than one superclass then we can choose
          *   just one field because this is incorrect code anyway)
          */
-        val fromSupertypes = supertypeScopeContext.collectCallables(name, isForIntersectionScope = false, FirScope::processPropertiesByName)
+        val fromSupertypes = supertypeScopeContext.collectCallables(name, FirScope::processPropertiesByName)
 
         val (fieldsFromSupertype, propertiesFromSupertypes) = fromSupertypes.partition {
             it is ResultOfIntersection.SingleMember && it.chosenSymbol is FirFieldSymbol
@@ -343,7 +343,7 @@ class JavaClassUseSiteMemberScope(
         destination: MutableCollection<FirNamedFunctionSymbol>
     ) {
         val resultsOfIntersectionToSaveInCache = mutableListOf<ResultOfIntersection<FirNamedFunctionSymbol>>()
-        val list = supertypeScopeContext.collectCallablesImpl(functionsFromSupertypesWithNaturalName, isForIntersectionScope = false)
+        val list = supertypeScopeContext.collectCallablesImpl(functionsFromSupertypesWithNaturalName)
         for (resultOfIntersectionWithNaturalName in list) {
             val someSymbolWithNaturalNameFromSuperType = resultOfIntersectionWithNaturalName.extractSomeSymbolFromSuperType()
             val explicitlyDeclaredFunctionWithNaturalName = explicitlyDeclaredFunctionsWithNaturalName.firstOrNull {
@@ -520,7 +520,7 @@ class JavaClassUseSiteMemberScope(
                     overriddenMembers.mapTo(this) { it.baseScope to listOf(it.member) }
                     addAll(renamedFunctionsFromSupertypes)
                 }
-                supertypeScopeContext.collectCallablesImpl(membersByScope, isForIntersectionScope = false)
+                supertypeScopeContext.collectCallablesImpl(membersByScope)
             }
         }
 
