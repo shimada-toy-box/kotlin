@@ -245,7 +245,9 @@ class FirTypeIntersectionScopeContext(
             }
         }
         val result = this.toMutableList()
-        //result.removeIf { (member, _) -> member.fir.unwrapSubstitutionOverrides().symbol in baseMembers }
+        if (result.count { (member, _) -> member.fir.unwrapSubstitutionOverrides().symbol !in baseMembers } < 2) {
+            return listOf(selectMostSpecificMember(result))
+        }
         return result
     }
 
