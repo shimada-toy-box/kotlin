@@ -17,5 +17,5 @@ abstract class NN : Base {
 class Diamond : Derived, NN()
 
 fun test(d: Diamond, s: String?) {
-    d.update(<!ARGUMENT_TYPE_MISMATCH!>s<!>)
+    d.update(s)
 }

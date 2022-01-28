@@ -15,5 +15,5 @@ FILE: test.kt
 
     }
     public final fun test(d: R|Diamond|, s: R|kotlin/String?|): R|kotlin/Unit| {
-        R|<local>/d|.<Inapplicable(INAPPLICABLE): /NN.update>#(R|<local>/s|)
+        R|<local>/d|.R|/Base.update|(R|<local>/s|)
     }
