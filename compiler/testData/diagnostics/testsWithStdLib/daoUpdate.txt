@@ -1,0 +1,41 @@
+package
+
+public fun test(/*0*/ d: Diamond, /*1*/ ds: DiamondSwapped, /*2*/ s: kotlin.String?): kotlin.Unit
+
+public interface Base {
+    public open override /*1*/ /*fake_override*/ fun equals(/*0*/ other: kotlin.Any?): kotlin.Boolean
+    public open override /*1*/ /*fake_override*/ fun hashCode(): kotlin.Int
+    public open override /*1*/ /*fake_override*/ fun toString(): kotlin.String
+    public abstract fun update(/*0*/ param: kotlin.String!): kotlin.Unit
+}
+
+public interface Derived : Base {
+    public open override /*1*/ /*fake_override*/ fun equals(/*0*/ other: kotlin.Any?): kotlin.Boolean
+    public open override /*1*/ /*fake_override*/ fun hashCode(): kotlin.Int
+    public open override /*1*/ /*fake_override*/ fun toString(): kotlin.String
+    public abstract override /*1*/ /*fake_override*/ fun update(/*0*/ param: kotlin.String!): kotlin.Unit
+}
+
+public final class Diamond : Derived, NN {
+    public constructor Diamond()
+    public open override /*2*/ /*fake_override*/ fun equals(/*0*/ other: kotlin.Any?): kotlin.Boolean
+    public open override /*2*/ /*fake_override*/ fun hashCode(): kotlin.Int
+    public open override /*2*/ /*fake_override*/ fun toString(): kotlin.String
+    public open override /*2*/ /*fake_override*/ fun update(/*0*/ param: kotlin.String!): kotlin.Unit
+}
+
+public final class DiamondSwapped : NN, Derived {
+    public constructor DiamondSwapped()
+    public open override /*2*/ /*fake_override*/ fun equals(/*0*/ other: kotlin.Any?): kotlin.Boolean
+    public open override /*2*/ /*fake_override*/ fun hashCode(): kotlin.Int
+    public open override /*2*/ /*fake_override*/ fun toString(): kotlin.String
+    public open override /*2*/ /*fake_override*/ fun update(/*0*/ param: kotlin.String): kotlin.Unit
+}
+
+public abstract class NN : Base {
+    public constructor NN()
+    public open override /*1*/ /*fake_override*/ fun equals(/*0*/ other: kotlin.Any?): kotlin.Boolean
+    public open override /*1*/ /*fake_override*/ fun hashCode(): kotlin.Int
+    public open override /*1*/ /*fake_override*/ fun toString(): kotlin.String
+    public open override /*1*/ fun update(/*0*/ param: kotlin.String): kotlin.Unit
+}

@@ -33356,6 +33356,12 @@ public class FirOldFrontendDiagnosticsTestGenerated extends AbstractFirDiagnosti
         }
 
         @Test
+        @TestMetadata("daoUpdate.kt")
+        public void testDaoUpdate() throws Exception {
+            runTest("compiler/testData/diagnostics/testsWithStdLib/daoUpdate.kt");
+        }
+
+        @Test
         @TestMetadata("elvisOnJavaList.kt")
         public void testElvisOnJavaList() throws Exception {
             runTest("compiler/testData/diagnostics/testsWithStdLib/elvisOnJavaList.kt");
