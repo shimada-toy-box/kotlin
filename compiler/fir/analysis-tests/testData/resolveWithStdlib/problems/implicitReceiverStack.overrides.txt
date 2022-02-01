@@ -1,0 +1,8 @@
+PersistentImplicitReceiverStack:
+  [SubstitutionOverride]: public open fun forEach(p0: R|ft<java/util/function/Consumer<in ft<ImplicitReceiverValue<*>, ImplicitReceiverValue<*>?>>, java/util/function/Consumer<in ft<ImplicitReceiverValue<*>, ImplicitReceiverValue<*>?>>?>|): R|kotlin/Unit| from Use site scope of /PersistentImplicitReceiverStack [id: 0]
+    [Enhancement]: public open fun forEach(p0: R|ft<java/util/function/Consumer<in ft<T, T?>>, java/util/function/Consumer<in ft<T, T?>>?>|): R|kotlin/Unit| from Use site scope of kotlin/collections/Iterable [id: 1]
+
+ImplicitReceiverStack:
+  [SubstitutionOverride]: public open fun forEach(p0: R|ft<java/util/function/Consumer<in ft<ImplicitReceiverValue<*>, ImplicitReceiverValue<*>?>>, java/util/function/Consumer<in ft<ImplicitReceiverValue<*>, ImplicitReceiverValue<*>?>>?>|): R|kotlin/Unit| from Use site scope of /ImplicitReceiverStack [id: 0]
+    [Enhancement]: public open fun forEach(p0: R|ft<java/util/function/Consumer<in ft<T, T?>>, java/util/function/Consumer<in ft<T, T?>>?>|): R|kotlin/Unit| from Use site scope of kotlin/collections/Iterable [id: 1]
+

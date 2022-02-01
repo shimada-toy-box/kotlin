@@ -1,0 +1,47 @@
+FILE: implicitReceiverStack.kt
+    public abstract interface SymbolOwner<E : R|SymbolOwner<E>|> : R|kotlin/Any| {
+    }
+    public abstract interface Symbol<E : R|SymbolOwner<E>|> : R|kotlin/Any| {
+    }
+    public abstract interface ReceiverValue : R|kotlin/Any| {
+        public abstract val type: R|kotlin/String|
+            public get(): R|kotlin/String|
+
+    }
+    public final class ImplicitReceiverValue<S : R|Symbol<*>|> : R|ReceiverValue| {
+        public constructor<S : R|Symbol<*>|>(boundSymbol: R|S?|, type: R|kotlin/String|): R|ImplicitReceiverValue<S>| {
+            super<R|kotlin/Any|>()
+        }
+
+        public final val boundSymbol: R|S?| = R|<local>/boundSymbol|
+            public get(): R|S?|
+
+        public final override val type: R|kotlin/String| = R|<local>/type|
+            public get(): R|kotlin/String|
+
+    }
+    public abstract class ImplicitReceiverStack : R|kotlin/collections/Iterable<ImplicitReceiverValue<*>>| {
+        public constructor(): R|ImplicitReceiverStack| {
+            super<R|kotlin/Any|>()
+        }
+
+        public abstract operator fun get(name: R|kotlin/String?|): R|ImplicitReceiverValue<*>?|
+
+    }
+    public final class PersistentImplicitReceiverStack : R|ImplicitReceiverStack|, R|kotlin/collections/Iterable<ImplicitReceiverValue<*>>| {
+        public constructor(stack: R|kotlin/collections/List<ImplicitReceiverValue<*>>|): R|PersistentImplicitReceiverStack| {
+            super<R|ImplicitReceiverStack|>()
+        }
+
+        private final val stack: R|kotlin/collections/List<ImplicitReceiverValue<*>>| = R|<local>/stack|
+            private get(): R|kotlin/collections/List<ImplicitReceiverValue<*>>|
+
+        public final override operator fun iterator(): R|kotlin/collections/Iterator<ImplicitReceiverValue<*>>| {
+            ^iterator this@R|/PersistentImplicitReceiverStack|.R|/PersistentImplicitReceiverStack.stack|.R|SubstitutionOverride<kotlin/collections/List.iterator: R|kotlin/collections/Iterator<ImplicitReceiverValue<*>>|>|()
+        }
+
+        public final override operator fun get(name: R|kotlin/String?|): R|ImplicitReceiverValue<*>?| {
+            ^get this@R|/PersistentImplicitReceiverStack|.R|/PersistentImplicitReceiverStack.stack|.R|kotlin/collections/lastOrNull|<R|ImplicitReceiverValue<*>|>()
+        }
+
+    }

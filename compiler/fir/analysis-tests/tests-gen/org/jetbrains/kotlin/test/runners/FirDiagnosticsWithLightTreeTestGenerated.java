@@ -5814,6 +5814,12 @@ public class FirDiagnosticsWithLightTreeTestGenerated extends AbstractFirDiagnos
             }
 
             @Test
+            @TestMetadata("implicitReceiverStack.kt")
+            public void testImplicitReceiverStack() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/problems/implicitReceiverStack.kt");
+            }
+
+            @Test
             @TestMetadata("invokePriority.kt")
             public void testInvokePriority() throws Exception {
                 runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/problems/invokePriority.kt");
