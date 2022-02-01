@@ -129,7 +129,7 @@ class FakeOverrideGenerator(
                     irFunction.returnType.containsErrorType() || irFunction.valueParameters.any { it.type.containsErrorType() }
                 },
                 realDeclarationSymbols,
-                FirTypeScope::getDirectOverriddenFunctions,
+                { baseSymbol -> getDirectOverriddenFunctions(baseSymbol, backendCompatibilityMode = true) },
                 useSiteMemberScope,
             )
         }
@@ -154,7 +154,7 @@ class FakeOverrideGenerator(
                             irProperty.getter?.returnType?.containsErrorType() == true
                 },
                 realDeclarationSymbols,
-                FirTypeScope::getDirectOverriddenProperties,
+                { baseSymbol -> getDirectOverriddenProperties(baseSymbol, backendCompatibilityMode = true) },
                 useSiteMemberScope,
             )
         }
@@ -254,11 +254,8 @@ class FakeOverrideGenerator(
         scope: FirTypeScope,
         containingClass: ConeClassLikeLookupTag,
     ): List<S> {
-        if (symbol.fir.origin == FirDeclarationOrigin.SubstitutionOverride) {
-            return listOf(symbol.originalForSubstitutionOverride!!)
-        }
-
-        return scope.directOverridden(symbol).map {
+        val baseSymbols = scope.directOverridden(symbol)
+        return baseSymbols.map {
             // Unwrapping should happen only for fake overrides members from the same class, not from supertypes
             if (it.fir.isSubstitutionOverride && it.dispatchReceiverClassOrNull() == containingClass)
                 it.originalForSubstitutionOverride!!

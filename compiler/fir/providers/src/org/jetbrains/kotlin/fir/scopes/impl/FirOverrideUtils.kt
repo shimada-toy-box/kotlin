@@ -6,7 +6,6 @@
 package org.jetbrains.kotlin.fir.scopes.impl
 
 import org.jetbrains.kotlin.fir.PrivateForInline
-import org.jetbrains.kotlin.fir.scopes.FirTypeScope
 import org.jetbrains.kotlin.fir.scopes.MemberWithBaseScope
 import org.jetbrains.kotlin.fir.scopes.ProcessOverriddenWithBaseScope
 import org.jetbrains.kotlin.fir.scopes.ProcessorAction
@@ -15,11 +14,23 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirNamedFunctionSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
 
 fun filterOutOverriddenFunctions(extractedOverridden: Collection<MemberWithBaseScope<FirNamedFunctionSymbol>>): Collection<MemberWithBaseScope<FirNamedFunctionSymbol>> {
-    return filterOutOverridden(extractedOverridden, FirTypeScope::processDirectOverriddenFunctionsWithBaseScope)
+    return filterOutOverridden(extractedOverridden) { functionSymbol, processor ->
+        processDirectOverriddenFunctionsWithBaseScope(
+            functionSymbol,
+            backendCompatibilityMode = false,
+            processor
+        )
+    }
 }
 
 fun filterOutOverriddenProperties(extractedOverridden: Collection<MemberWithBaseScope<FirPropertySymbol>>): Collection<MemberWithBaseScope<FirPropertySymbol>> {
-    return filterOutOverridden(extractedOverridden, FirTypeScope::processDirectOverriddenPropertiesWithBaseScope)
+    return filterOutOverridden(extractedOverridden) { propertySymbol, processor ->
+        processDirectOverriddenPropertiesWithBaseScope(
+            propertySymbol,
+            backendCompatibilityMode = false,
+            processor
+        )
+    }
 }
 
 @OptIn(PrivateForInline::class)
