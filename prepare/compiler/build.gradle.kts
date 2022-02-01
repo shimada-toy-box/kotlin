@@ -84,8 +84,6 @@ val distLibraryProjects = listOfNotNull(
     ":kotlin-ant",
     ":kotlin-daemon",
     ":kotlin-daemon-client",
-    // TODO: uncomment when new daemon will be put back into dist
-//    ":kotlin-daemon-client-new",
     ":kotlin-imports-dumper-compiler-plugin",
     ":kotlin-main-kts",
     ":kotlin-preloader",
@@ -289,17 +287,17 @@ val proguard by task<CacheableProguardTask> {
                     "jre/lib/rt.jar",
                     "../Classes/classes.jar",
                     jdkHome = it.metadata.installationPath.asFile
-                )
+                ) ?: error("Java runtime is not found!")
             },
             javaLauncher.map {
                 firstFromJavaHomeThatExists(
                     "jre/lib/jsse.jar",
                     "../Classes/jsse.jar",
                     jdkHome = it.metadata.installationPath.asFile
-                )
+                ) ?: error("JSSE is not found!")
             },
             javaLauncher.map {
-                Jvm.forHome(it.metadata.installationPath.asFile).toolsJar
+                Jvm.forHome(it.metadata.installationPath.asFile).toolsJar ?: error("tools.jar is not found!")
             }
         )
     )

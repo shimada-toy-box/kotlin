@@ -7,7 +7,10 @@
       <w>cidr</w>
       <w>fastutil</w>
       <w>foldable</w>
+      <w>fusesource</w>
       <w>instrumentator</w>
+      <w>jansi</w>
+      <w>javaslang</w>
       <w>jdks</w>
       <w>proguarded</w>
       <w>protobuf</w>
