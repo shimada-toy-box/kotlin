@@ -1,0 +1,18 @@
+class Test : Map<String, String>, AbstractMap<String, String> {
+  constructor() /* primary */ {
+    super/*AbstractMap*/<String, String>()
+    /* <init>() */
+
+  }
+
+  override val entries: MutableSet<MutableEntry<String, String>>
+    override get(): MutableSet<MutableEntry<String, String>> {
+      return throw Exception()
+    }
+
+}
+
+fun box(): String {
+  Test().remove(key = null, value = "") /*~> Unit */
+  return "OK"
+}

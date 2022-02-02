@@ -2549,6 +2549,12 @@ public class IrTextTestGenerated extends AbstractIrTextTest {
         }
 
         @Test
+        @TestMetadata("kt48945.kt")
+        public void testKt48945() throws Exception {
+            runTest("compiler/testData/ir/irText/firProblems/kt48945.kt");
+        }
+
+        @Test
         @TestMetadata("lambdaInEnumEntryConstructorCall.kt")
         public void testLambdaInEnumEntryConstructorCall() throws Exception {
             runTest("compiler/testData/ir/irText/firProblems/lambdaInEnumEntryConstructorCall.kt");

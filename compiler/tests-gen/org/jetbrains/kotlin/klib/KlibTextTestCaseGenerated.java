@@ -1887,6 +1887,11 @@ public class KlibTextTestCaseGenerated extends AbstractKlibTextTestCase {
             runTest("compiler/testData/ir/irText/firProblems/kt43342.kt");
         }
 
+        @TestMetadata("kt48945.kt")
+        public void testKt48945() throws Exception {
+            runTest("compiler/testData/ir/irText/firProblems/kt48945.kt");
+        }
+
         @TestMetadata("lambdaInEnumEntryConstructorCall.kt")
         public void testLambdaInEnumEntryConstructorCall() throws Exception {
             runTest("compiler/testData/ir/irText/firProblems/lambdaInEnumEntryConstructorCall.kt");
