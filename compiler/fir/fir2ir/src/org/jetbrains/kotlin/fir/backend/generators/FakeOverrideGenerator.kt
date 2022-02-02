@@ -169,7 +169,12 @@ class FakeOverrideGenerator(
         val classLookupTag = klass.symbol.toLookupTag()
         val baseFirSymbolsForFakeOverride =
             if (originalSymbol.shouldHaveComputedBaseSymbolsForClass(classLookupTag)) {
-                computeBaseSymbols(originalSymbol, FirTypeScope::getDirectOverriddenFunctions, scope, classLookupTag)
+                computeBaseSymbols(originalSymbol, scope, classLookupTag) { function ->
+                    getDirectOverriddenFunctions(
+                        function,
+                        backendCompatibilityMode = true
+                    )
+                }.takeIf { it.isNotEmpty() } ?: listOfNotNull(originalSymbol.originalIfFakeOverride())
             } else {
                 listOf(originalSymbol)
             }
@@ -271,9 +276,9 @@ class FakeOverrideGenerator(
 
     private inline fun <reified S : FirCallableSymbol<*>> computeBaseSymbols(
         symbol: S,
-        directOverridden: FirTypeScope.(S) -> List<S>,
         scope: FirTypeScope,
         containingClass: ConeClassLikeLookupTag,
+        directOverridden: FirTypeScope.(S) -> List<S>,
     ): List<S> {
         val baseSymbols = scope.directOverridden(symbol)
         return baseSymbols.map {
