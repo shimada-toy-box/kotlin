@@ -215,7 +215,9 @@ class FakeOverrideGenerator(
                 // We have already a FIR declaration for such fake override
                 val baseSymbols = computeBaseSymbols(originalSymbol, computeDirectOverridden, scope, classLookupTag)
                 val firstOverride = baseSymbols.firstOrNull()?.fir
-                if (firstOverride == null || originalDeclaration.originalForSubstitutionOverride === firstOverride) {
+                if (firstOverride == null ||
+                    originalDeclaration.containsOverride(firstOverride)
+                ) {
                     // Just take it, it's from the first supertype or from the only supertype
                     originalDeclaration to baseSymbols
                 } else {
