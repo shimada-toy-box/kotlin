@@ -213,8 +213,15 @@ class FakeOverrideGenerator(
             originalSymbol.shouldHaveComputedBaseSymbolsForClass(classLookupTag) -> {
                 // Substitution or intersection case
                 // We have already a FIR declaration for such fake override
-                val baseSymbols = computeBaseSymbols(originalSymbol, computeDirectOverridden, scope, classLookupTag)
-                val firstOverride = baseSymbols.firstOrNull()?.fir
+                val overriddenSymbols = scope.computeDirectOverridden(originalSymbol)
+                val baseSymbols = overriddenSymbols.map {
+                    // Unwrapping should happen only for fake overrides members from the same class, not from supertypes
+                    if (it.fir.isSubstitutionOverride && it.dispatchReceiverClassOrNull() == classLookupTag)
+                        it.originalForSubstitutionOverride!!
+                    else
+                        it
+                }
+                val firstOverride = overriddenSymbols.firstOrNull()?.fir
                 if (firstOverride == null ||
                     originalDeclaration.containsOverride(firstOverride)
                 ) {
