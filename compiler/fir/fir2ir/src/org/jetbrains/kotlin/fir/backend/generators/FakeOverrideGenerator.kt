@@ -223,6 +223,7 @@ class FakeOverrideGenerator(
                 }
                 val firstOverride = overriddenSymbols.firstOrNull()?.fir
                 if (firstOverride == null ||
+                    overriddenSymbols.size == 1 ||
                     originalDeclaration.containsOverride(firstOverride)
                 ) {
                     // Just take it, it's from the first supertype or from the only supertype
