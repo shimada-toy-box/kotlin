@@ -14,20 +14,20 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirNamedFunctionSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
 
 fun filterOutOverriddenFunctions(extractedOverridden: Collection<MemberWithBaseScope<FirNamedFunctionSymbol>>): Collection<MemberWithBaseScope<FirNamedFunctionSymbol>> {
-    return filterOutOverridden(extractedOverridden) { functionSymbol, processor ->
+    return filterOutOverridden(extractedOverridden) { functionSymbol, backendCompatibilityMode, processor ->
         processDirectOverriddenFunctionsWithBaseScope(
             functionSymbol,
-            backendCompatibilityMode = false,
+            backendCompatibilityMode,
             processor
         )
     }
 }
 
 fun filterOutOverriddenProperties(extractedOverridden: Collection<MemberWithBaseScope<FirPropertySymbol>>): Collection<MemberWithBaseScope<FirPropertySymbol>> {
-    return filterOutOverridden(extractedOverridden) { propertySymbol, processor ->
+    return filterOutOverridden(extractedOverridden) { propertySymbol, backendCompatibilityMode, processor ->
         processDirectOverriddenPropertiesWithBaseScope(
             propertySymbol,
-            backendCompatibilityMode = false,
+            backendCompatibilityMode,
             processor
         )
     }
@@ -61,7 +61,7 @@ inline fun <D : FirCallableSymbol<*>> overrides(
 
     var result = false
 
-    fScope.processAllOverridden(fMember) { overridden, _ ->
+    fScope.processAllOverridden(fMember, false) { overridden, _ ->
         if (overridden == gMember) {
             result = true
             ProcessorAction.STOP

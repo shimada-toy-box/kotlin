@@ -81,7 +81,7 @@ class MemberWithBaseScope<out D : FirCallableSymbol<*>>(val member: D, val baseS
     }
 }
 
-typealias ProcessOverriddenWithBaseScope<D> = FirTypeScope.(D, (D, FirTypeScope) -> ProcessorAction) -> ProcessorAction
+typealias ProcessOverriddenWithBaseScope<D> = FirTypeScope.(D, Boolean, (D, FirTypeScope) -> ProcessorAction) -> ProcessorAction
 
 fun FirTypeScope.processOverriddenFunctions(
     functionSymbol: FirNamedFunctionSymbol,
