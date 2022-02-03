@@ -176,7 +176,7 @@ class FakeOverrideGenerator(
                         function,
                         backendCompatibilityMode = true
                     )
-                }.takeIf { it.isNotEmpty() } ?: listOfNotNull(originalSymbol.originalIfFakeOverride())
+                }
             } else {
                 listOf(originalSymbol)
             }
