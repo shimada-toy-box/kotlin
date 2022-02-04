@@ -159,7 +159,7 @@ private interface CodeContext {
      *
      * @return the requested value
      */
-    fun genGetValue(value: IrValueDeclaration): LLVMValueRef
+    fun genGetValue(value: IrValueDeclaration, resultSlot: LLVMValueRef?): LLVMValueRef
 
     /**
      * Returns owning function scope.
@@ -231,13 +231,13 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
             get() = currentCodeContext.stackLocalsManager
 
         override fun evaluateCall(function: IrFunction, args: List<LLVMValueRef>, resultLifetime: Lifetime, superClass: IrClass?) =
-                evaluateSimpleFunctionCall(function, args, resultLifetime, superClass)
+                evaluateSimpleFunctionCall(function, args, resultLifetime, superClass, null)
 
         override fun evaluateExplicitArgs(expression: IrFunctionAccessExpression): List<LLVMValueRef> =
                 this@CodeGeneratorVisitor.evaluateExplicitArgs(expression)
 
-        override fun evaluateExpression(value: IrExpression): LLVMValueRef =
-                this@CodeGeneratorVisitor.evaluateExpression(value)
+        override fun evaluateExpression(value: IrExpression, resultSlot: LLVMValueRef?): LLVMValueRef =
+                this@CodeGeneratorVisitor.evaluateExpression(value, resultSlot)
     }
 
     private val intrinsicGenerator = IntrinsicGenerator(intrinsicGeneratorEnvironment)
@@ -264,7 +264,7 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
 
         override fun getDeclaredValue(value: IrValueDeclaration) = -1
 
-        override fun genGetValue(value: IrValueDeclaration) = unsupported(value)
+        override fun genGetValue(value: IrValueDeclaration, resultSlot: LLVMValueRef?) = unsupported(value)
 
         override fun functionScope(): CodeContext? = null
 
@@ -342,13 +342,13 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
     private fun FunctionGenerationContext.initThreadLocalField(irField: IrField) {
         val initializer = irField.initializer ?: return
         val address = context.llvmDeclarations.forStaticField(irField).storageAddressAccess.getAddress(this)
-        storeAny(evaluateExpression(initializer.expression), address, false)
+        storeAny(evaluateExpression(initializer.expression, null), address, false)
     }
 
     private fun FunctionGenerationContext.initGlobalField(irField: IrField) {
         val address = context.llvmDeclarations.forStaticField(irField).storageAddressAccess.getAddress(this)
         val initialValue = if (irField.hasNonConstInitializer) {
-            val initialization = evaluateExpression(irField.initializer!!.expression)
+            val initialization = evaluateExpression(irField.initializer!!.expression, null)
             if (irField.shouldBeFrozen(context))
                 freeze(initialization, currentCodeContext.exceptionHandler)
             initialization
@@ -516,7 +516,7 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
                             .filter { it.storageKind(context) == FieldStorageKind.THREAD_LOCAL }
                             .forEach { initThreadLocalField(it) }
                     context.llvm.initializersGenerationState.moduleThreadLocalInitializers.forEach {
-                        evaluateSimpleFunctionCall(it, emptyList(), Lifetime.IRRELEVANT)
+                        evaluateSimpleFunctionCall(it, emptyList(), Lifetime.IRRELEVANT, null)
                     }
                     ret(null)
                 }
@@ -666,12 +666,12 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
             return if (index < 0) super.getDeclaredValue(value) else index
         }
 
-        override fun genGetValue(value: IrValueDeclaration): LLVMValueRef {
+        override fun genGetValue(value: IrValueDeclaration, resultSlot: LLVMValueRef?): LLVMValueRef {
             val index = functionGenerationContext.vars.indexOf(value)
             if (index < 0) {
-                return super.genGetValue(value)
+                return super.genGetValue(value, resultSlot)
             } else {
-                return functionGenerationContext.vars.load(index)
+                return functionGenerationContext.vars.load(index, resultSlot)
             }
         }
     }
@@ -701,12 +701,12 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
             }
         }
 
-        override fun genGetValue(value: IrValueDeclaration): LLVMValueRef {
+        override fun genGetValue(value: IrValueDeclaration, resultSlot: LLVMValueRef?): LLVMValueRef {
             val index = functionGenerationContext.vars.indexOf(value)
             if (index < 0) {
-                return super.genGetValue(value)
+                return super.genGetValue(value, resultSlot)
             } else {
-                return functionGenerationContext.vars.load(index)
+                return functionGenerationContext.vars.load(index, resultSlot)
             }
         }
     }
@@ -844,7 +844,7 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
                                 callDirect(context.ir.symbols.throwIllegalStateExceptionWithMessage.owner,
                                         listOf(context.llvm.staticData.kotlinStringLiteral(
                                                 "unsupported call of reified inlined function `${declaration.fqNameForIrSerialization}`").llvm),
-                                        Lifetime.IRRELEVANT)
+                                        Lifetime.IRRELEVANT, null)
                                 return@usingVariableScope
                             }
                             when (body) {
@@ -951,7 +951,7 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
             val globalProperty = (globalPropertyAccess as? GlobalAddressAccess)?.getAddress(null)
             if (globalProperty != null) {
                 LLVMSetInitializer(globalProperty, when (initializer) {
-                    is IrConst<*>, is IrConstantValue -> evaluateExpression(initializer)
+                    is IrConst<*>, is IrConstantValue -> evaluateExpression(initializer, null)
                     else -> LLVMConstNull(type)
                 })
                 // (Cannot do this before the global is initialized).
@@ -970,37 +970,37 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
 
     //-------------------------------------------------------------------------//
 
-    private fun evaluateExpression(value: IrExpression): LLVMValueRef {
+    private fun evaluateExpression(value: IrExpression, resultSlot: LLVMValueRef?): LLVMValueRef {
         updateBuilderDebugLocation(value)
         recordCoverage(value)
         when (value) {
-            is IrTypeOperatorCall    -> return evaluateTypeOperator           (value)
-            is IrCall                -> return evaluateCall                   (value)
+            is IrTypeOperatorCall    -> return evaluateTypeOperator           (value, resultSlot)
+            is IrCall                -> return evaluateCall                   (value, resultSlot)
             is IrDelegatingConstructorCall ->
-                                        return evaluateCall                   (value)
-            is IrConstructorCall     -> return evaluateCall                   (value)
+                                        return evaluateCall                   (value, resultSlot)
+            is IrConstructorCall     -> return evaluateCall                   (value, resultSlot)
             is IrInstanceInitializerCall ->
                                         return evaluateInstanceInitializerCall(value)
-            is IrGetValue            -> return evaluateGetValue               (value)
+            is IrGetValue            -> return evaluateGetValue               (value, resultSlot)
             is IrSetValue            -> return evaluateSetValue               (value)
-            is IrGetField            -> return evaluateGetField               (value)
+            is IrGetField            -> return evaluateGetField               (value, resultSlot)
             is IrSetField            -> return evaluateSetField               (value)
             is IrConst<*>            -> return evaluateConst                  (value).llvm
             is IrReturn              -> return evaluateReturn                 (value)
-            is IrWhen                -> return evaluateWhen                   (value)
+            is IrWhen                -> return evaluateWhen                   (value, resultSlot)
             is IrThrow               -> return evaluateThrow                  (value)
             is IrTry                 -> return evaluateTry                    (value)
             is IrReturnableBlock     -> return evaluateReturnableBlock        (value)
-            is IrContainerExpression -> return evaluateContainerExpression    (value)
+            is IrContainerExpression -> return evaluateContainerExpression    (value, resultSlot)
             is IrWhileLoop           -> return evaluateWhileLoop              (value)
             is IrDoWhileLoop         -> return evaluateDoWhileLoop            (value)
             is IrVararg              -> return evaluateVararg                 (value)
             is IrBreak               -> return evaluateBreak                  (value)
             is IrContinue            -> return evaluateContinue               (value)
-            is IrGetObjectValue      -> return evaluateGetObjectValue         (value)
+            is IrGetObjectValue      -> return evaluateGetObjectValue         (value, resultSlot)
             is IrFunctionReference   -> return evaluateFunctionReference      (value)
             is IrSuspendableExpression ->
-                                        return evaluateSuspendableExpression  (value)
+                                        return evaluateSuspendableExpression  (value, resultSlot)
             is IrSuspensionPoint     -> return evaluateSuspensionPoint        (value)
             is IrClassReference ->      return evaluateClassReference         (value)
             is IrConstantValue ->       return evaluateConstantValue          (value).llvm
@@ -1012,7 +1012,7 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
 
     private fun generateStatement(statement: IrStatement) {
         when (statement) {
-            is IrExpression -> evaluateExpression(statement)
+            is IrExpression -> evaluateExpression(statement, null)
             is IrVariable -> generateVariable(statement)
             else -> TODO(ir2string(statement))
         }
@@ -1022,19 +1022,20 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
 
     //-------------------------------------------------------------------------//
 
-    private fun evaluateGetObjectValue(value: IrGetObjectValue): LLVMValueRef =
+    private fun evaluateGetObjectValue(value: IrGetObjectValue, resultSlot: LLVMValueRef?): LLVMValueRef =
         functionGenerationContext.getObjectValue(
                 value.symbol.owner,
                 currentCodeContext.exceptionHandler,
                 value.startLocation,
-                value.endLocation
+                value.endLocation,
+                resultSlot
         )
 
 
     //-------------------------------------------------------------------------//
 
     private fun evaluateExpressionAndJump(expression: IrExpression, destination: ContinuationBlock) {
-        val result = evaluateExpression(expression)
+        val result = evaluateExpression(expression, null)
 
         // It is possible to check here whether the generated code has the normal continuation path
         // and do not generate any jump if not;
@@ -1098,7 +1099,7 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
     private fun evaluateVararg(value: IrVararg): LLVMValueRef {
         val elements = value.elements.map {
             if (it is IrExpression) {
-                val mapped = evaluateExpression(it)
+                val mapped = evaluateExpression(it, null)
                 if (mapped.isConst) {
                     return@map mapped
                 }
@@ -1118,7 +1119,7 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
     //-------------------------------------------------------------------------//
 
     private fun evaluateThrow(expression: IrThrow): LLVMValueRef {
-        val exception = evaluateExpression(expression.value)
+        val exception = evaluateExpression(expression.value, null)
         currentCodeContext.exceptionHandler.genThrow(functionGenerationContext, exception)
         return codegen.kNothingFakeValue
     }
@@ -1286,7 +1287,7 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
         }
     }
 
-    private fun evaluateWhen(expression: IrWhen): LLVMValueRef {
+    private fun evaluateWhen(expression: IrWhen, resultSlot: LLVMValueRef?): LLVMValueRef {
         context.log{"evaluateWhen                   : ${ir2string(expression)}"}
 
         val whenEmittingContext = WhenEmittingContext(expression)
@@ -1297,7 +1298,7 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
                              null
                          else
                              functionGenerationContext.basicBlock("when_next", it.startLocation, it.endLocation)
-            generateWhenCase(whenEmittingContext, it, bbNext)
+            generateWhenCase(whenEmittingContext, it, bbNext, resultSlot)
         }
 
         if (whenEmittingContext.bbExit.isInitialized())
@@ -1320,15 +1321,15 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
         }
     }
 
-    private fun generateWhenCase(whenEmittingContext: WhenEmittingContext, branch: IrBranch, bbNext: LLVMBasicBlockRef?) {
+    private fun generateWhenCase(whenEmittingContext: WhenEmittingContext, branch: IrBranch, bbNext: LLVMBasicBlockRef?, resultSlot: LLVMValueRef?) {
         val brResult = if (branch.isUnconditional())
-            evaluateExpression(branch.result)
+            evaluateExpression(branch.result, resultSlot)
         else {
             val bbCase = functionGenerationContext.basicBlock("when_case", branch.startLocation, branch.endLocation)
-            val condition = evaluateExpression(branch.condition)
+            val condition = evaluateExpression(branch.condition, null)
             functionGenerationContext.condBr(condition, bbCase, bbNext ?: whenEmittingContext.bbExit.value)
             functionGenerationContext.positionAtEnd(bbCase)
-            evaluateExpression(branch.result)
+            evaluateExpression(branch.result, resultSlot)
         }
         if (!functionGenerationContext.isAfterTerminator()) {
             if (whenEmittingContext.needsPhi)
@@ -1348,7 +1349,7 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
             functionGenerationContext.br(loopScope.loopCheck)
 
             functionGenerationContext.positionAtEnd(loopScope.loopCheck)
-            val condition = evaluateExpression(loop.condition)
+            val condition = evaluateExpression(loop.condition, null)
             functionGenerationContext.condBr(condition, loopBody, loopScope.loopExit)
 
             functionGenerationContext.positionAtEnd(loopBody)
@@ -1380,7 +1381,7 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
             functionGenerationContext.br(loopScope.loopCheck)
 
             functionGenerationContext.positionAtEnd(loopScope.loopCheck)
-            val condition = evaluateExpression(loop.condition)
+            val condition = evaluateExpression(loop.condition, null)
             functionGenerationContext.condBr(condition, loopBody, loopScope.loopExit)
 
             functionGenerationContext.positionAtEnd(loopScope.loopExit)
@@ -1392,16 +1393,16 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
 
     //-------------------------------------------------------------------------//
 
-    private fun evaluateGetValue(value: IrGetValue): LLVMValueRef {
+    private fun evaluateGetValue(value: IrGetValue, resultSlot: LLVMValueRef?): LLVMValueRef {
         context.log{"evaluateGetValue               : ${ir2string(value)}"}
-        return currentCodeContext.genGetValue(value.symbol.owner)
+        return currentCodeContext.genGetValue(value.symbol.owner, resultSlot)
     }
 
     //-------------------------------------------------------------------------//
 
     private fun evaluateSetValue(value: IrSetValue): LLVMValueRef {
         context.log{"evaluateSetValue               : ${ir2string(value)}"}
-        val result = evaluateExpression(value.value)
+        val result = evaluateExpression(value.value, null) // TODO: maybe reuse variable slot?
         val variable = currentCodeContext.getDeclaredValue(value.symbol.owner)
         functionGenerationContext.vars.store(result, variable)
         assert(value.type.isUnit())
@@ -1451,9 +1452,9 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
             val inlineAtFunctionSymbol = callSiteOrigin?.inlineAtSymbol as? IrFunctionSymbol
             inlineAtFunctionSymbol?.run {
                 switchSymbolizationContextTo(inlineAtFunctionSymbol) {
-                    evaluateExpression(it)
+                    evaluateExpression(it, null)
                 }
-            } ?: evaluateExpression(it)
+            } ?: evaluateExpression(it, null)
         }
         this.currentCodeContext.genDeclareVariable(variable, value)
     }
@@ -1467,14 +1468,14 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
 
     //-------------------------------------------------------------------------//
 
-    private fun evaluateTypeOperator(value: IrTypeOperatorCall): LLVMValueRef {
+    private fun evaluateTypeOperator(value: IrTypeOperatorCall, resultSlot: LLVMValueRef?): LLVMValueRef {
         return when (value.operator) {
-            IrTypeOperator.CAST                      -> evaluateCast(value)
+            IrTypeOperator.CAST                      -> evaluateCast(value, resultSlot)
             IrTypeOperator.IMPLICIT_INTEGER_COERCION -> evaluateIntegerCoercion(value)
-            IrTypeOperator.IMPLICIT_CAST             -> evaluateExpression(value.argument)
+            IrTypeOperator.IMPLICIT_CAST             -> evaluateExpression(value.argument, resultSlot)
             IrTypeOperator.IMPLICIT_NOTNULL          -> TODO(ir2string(value))
             IrTypeOperator.IMPLICIT_COERCION_TO_UNIT -> {
-                evaluateExpression(value.argument)
+                evaluateExpression(value.argument, null)
                 functionGenerationContext.theUnitInstanceRef.llvm
             }
             IrTypeOperator.SAFE_CAST                 -> throw IllegalStateException("safe cast wasn't lowered")
@@ -1504,7 +1505,7 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
         context.log{"evaluateIntegerCoercion        : ${ir2string(value)}"}
         val type = value.typeOperand
         assert(type.isPrimitiveInteger() || type.isUnsignedInteger())
-        val result = evaluateExpression(value.argument)
+        val result = evaluateExpression(value.argument, null)
         assert(value.argument.type.isInt())
         val llvmSrcType = codegen.getLLVMType(value.argument.type)
         val llvmDstType = codegen.getLLVMType(type)
@@ -1530,12 +1531,12 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
     //    float   | fptosi   fptosi  fptosi  fptosi      x      fpext
     //    double  | fptosi   fptosi  fptosi  fptosi   fptrunc      x
 
-    private fun evaluateCast(value: IrTypeOperatorCall): LLVMValueRef {
+    private fun evaluateCast(value: IrTypeOperatorCall, resultSlot: LLVMValueRef?): LLVMValueRef {
         context.log{"evaluateCast                   : ${ir2string(value)}"}
         val dstClass = value.typeOperand.getClass()
                 ?: error("No class for ${value.typeOperand.render()} from \n${functionGenerationContext.irFunction?.render()}")
 
-        val srcArg = evaluateExpression(value.argument)
+        val srcArg = evaluateExpression(value.argument, resultSlot)
         assert(srcArg.type == codegen.kObjHeaderPtr)
 
         with(functionGenerationContext) {
@@ -1544,14 +1545,16 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
                     callDirect(
                             context.ir.symbols.throwTypeCastException.owner,
                             emptyList(),
-                            Lifetime.GLOBAL
+                            Lifetime.GLOBAL,
+                            null
                     )
                 } else {
                     val dstTypeInfo = functionGenerationContext.bitcast(kInt8Ptr, codegen.typeInfoValue(dstClass))
                     callDirect(
                             context.ir.symbols.throwClassCastException.owner,
                             listOf(srcArg, dstTypeInfo),
-                            Lifetime.GLOBAL
+                            Lifetime.GLOBAL,
+                            null
                     )
                 }
             }
@@ -1565,7 +1568,7 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
         context.log{"evaluateInstanceOf             : ${ir2string(value)}"}
 
         val type     = value.typeOperand
-        val srcArg   = evaluateExpression(value.argument)     // Evaluate src expression.
+        val srcArg   = evaluateExpression(value.argument, null)     // Evaluate src expression.
 
         val bbExit       = functionGenerationContext.basicBlock("instance_of_exit", value.startLocation)
         val bbInstanceOf = functionGenerationContext.basicBlock("instance_of_notnull", value.startLocation)
@@ -1628,7 +1631,8 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
         val objCObject = callDirect(
                 context.ir.symbols.interopObjCObjectRawValueGetter.owner,
                 listOf(obj),
-                Lifetime.IRRELEVANT
+                Lifetime.IRRELEVANT,
+                null
         )
 
         return if (dstClass.isObjCClass()) {
@@ -1689,12 +1693,12 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
 
     //-------------------------------------------------------------------------//
 
-    private fun evaluateGetField(value: IrGetField): LLVMValueRef {
+    private fun evaluateGetField(value: IrGetField, resultSlot: LLVMValueRef?): LLVMValueRef {
         context.log { "evaluateGetField               : ${ir2string(value)}" }
         return if (!value.symbol.owner.isStatic) {
-            val thisPtr = evaluateExpression(value.receiver!!)
+            val thisPtr = evaluateExpression(value.receiver!!, null)
             functionGenerationContext.loadSlot(
-                    fieldPtrOfClass(thisPtr, value.symbol.owner), !value.symbol.owner.isFinal)
+                    fieldPtrOfClass(thisPtr, value.symbol.owner), !value.symbol.owner.isFinal, resultSlot = resultSlot)
         } else {
             assert(value.receiver == null)
             if (value.symbol.owner.correspondingPropertySymbol?.owner?.isConst == true) {
@@ -1706,7 +1710,7 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
                 val ptr = context.llvmDeclarations.forStaticField(value.symbol.owner).storageAddressAccess.getAddress(
                         functionGenerationContext
                 )
-                functionGenerationContext.loadSlot(ptr, !value.symbol.owner.isFinal)
+                functionGenerationContext.loadSlot(ptr, !value.symbol.owner.isFinal, resultSlot = resultSlot)
             }
         }.also {
             if (value.type.classifierOrNull?.isClassWithFqName(vectorType) == true)
@@ -1749,9 +1753,9 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
             return codegen.theUnitInstanceRef.llvm
         }
 
-        val valueToAssign = evaluateExpression(value.value)
+        val valueToAssign = evaluateExpression(value.value, null)
         val store = if (!value.symbol.owner.isStatic) {
-            val thisPtr = evaluateExpression(value.receiver!!)
+            val thisPtr = evaluateExpression(value.receiver!!, null)
             assert(thisPtr.type == codegen.kObjHeaderPtr) {
                 LLVMPrintTypeToString(thisPtr.type)?.toKString().toString()
             }
@@ -1912,10 +1916,12 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
     private fun evaluateReturn(expression: IrReturn): LLVMValueRef {
         context.log{"evaluateReturn                 : ${ir2string(expression)}"}
         val value = expression.value
-
-        val evaluated = evaluateExpression(value)
-
         val target = expression.returnTargetSymbol.owner
+
+        val evaluated = evaluateExpression(value, functionGenerationContext.returnSlot.takeIf {
+            target == functionGenerationContext.irFunction
+        })
+
 
         currentCodeContext.genReturn(target, evaluated)
         return codegen.kNothingFakeValue
@@ -2058,7 +2064,7 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
 
     //-------------------------------------------------------------------------//
 
-    private fun evaluateContainerExpression(value: IrContainerExpression): LLVMValueRef {
+    private fun evaluateContainerExpression(value: IrContainerExpression, resultSlot: LLVMValueRef?): LLVMValueRef {
         context.log{"evaluateContainerExpression    : ${value.statements.forEach { ir2string(it) }}"}
 
         val scope = if (value.isTransparentScope) {
@@ -2073,7 +2079,7 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
             }
             value.statements.lastOrNull()?.let {
                 if (it is IrExpression) {
-                    return evaluateExpression(it)
+                    return evaluateExpression(it, resultSlot)
                 } else {
                     generateStatement(it)
                 }
@@ -2090,7 +2096,7 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
     }
 
     //-------------------------------------------------------------------------//
-    private fun evaluateCall(value: IrFunctionAccessExpression): LLVMValueRef {
+    private fun evaluateCall(value: IrFunctionAccessExpression, resultSlot: LLVMValueRef?): LLVMValueRef {
         context.log{"evaluateCall                   : ${ir2string(value)}"}
 
         intrinsicGenerator.tryEvaluateSpecialCall(value)?.let { return it }
@@ -2099,9 +2105,9 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
 
         updateBuilderDebugLocation(value)
         return when (value) {
-            is IrDelegatingConstructorCall -> delegatingConstructorCall(value.symbol.owner, args)
-            is IrConstructorCall -> evaluateConstructorCall(value, args)
-            else -> evaluateFunctionCall(value as IrCall, args, resultLifetime(value))
+            is IrDelegatingConstructorCall -> delegatingConstructorCall(value.symbol.owner, args, resultSlot)
+            is IrConstructorCall -> evaluateConstructorCall(value, args, resultSlot)
+            else -> evaluateFunctionCall(value as IrCall, args, resultLifetime(value), resultSlot)
         }
     }
 
@@ -2247,7 +2253,7 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
             // Suspend call from non-suspend function - must be [invokeSuspend].
             assert ((caller as IrSimpleFunction).overrides(context.ir.symbols.invokeSuspendFunction.owner),
                     { "Expected 'BaseContinuationImpl.invokeSuspend' but was '$caller'" })
-            currentCodeContext.genGetValue(caller.dispatchReceiverParameter!!)
+            currentCodeContext.genGetValue(caller.dispatchReceiverParameter!!, null)
         }
     }
 
@@ -2260,7 +2266,7 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
      */
     private fun evaluateExplicitArgs(expression: IrFunctionAccessExpression): List<LLVMValueRef> {
         val result = expression.getArgumentsWithIr().map { (_, argExpr) ->
-            evaluateExpression(argExpr)
+            evaluateExpression(argExpr, null)
         }
         val explicitParametersCount = expression.symbol.owner.explicitParametersCount
         if (result.size != explicitParametersCount) {
@@ -2296,8 +2302,8 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
         }
     }
 
-    private fun evaluateSuspendableExpression(expression: IrSuspendableExpression): LLVMValueRef {
-        val suspensionPointId = evaluateExpression(expression.suspensionPointId)
+    private fun evaluateSuspendableExpression(expression: IrSuspendableExpression, resultSlot: LLVMValueRef?): LLVMValueRef {
+        val suspensionPointId = evaluateExpression(expression.suspensionPointId, null)
         val bbStart = functionGenerationContext.basicBlock("start", expression.result.startLocation)
         val bbDispatch = functionGenerationContext.basicBlock("dispatch", expression.suspensionPointId.startLocation)
 
@@ -2306,7 +2312,7 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
             functionGenerationContext.condBr(functionGenerationContext.icmpEq(suspensionPointId, kNullInt8Ptr), bbStart, bbDispatch)
 
             functionGenerationContext.positionAtEnd(bbStart)
-            val result = evaluateExpression(expression.result)
+            val result = evaluateExpression(expression.result, resultSlot)
 
             functionGenerationContext.appendingTo(bbDispatch) {
                 if (context.config.indirectBranchesAreAllowed)
@@ -2327,14 +2333,14 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
     private inner class SuspensionPointScope(val suspensionPointId: IrVariable,
                                              val bbResume: LLVMBasicBlockRef,
                                              val bbResumeId: Int): InnerScopeImpl() {
-        override fun genGetValue(value: IrValueDeclaration): LLVMValueRef {
+        override fun genGetValue(value: IrValueDeclaration, resultSlot: LLVMValueRef?): LLVMValueRef {
             if (value == suspensionPointId) {
                 return if (context.config.indirectBranchesAreAllowed)
                            functionGenerationContext.blockAddress(bbResume)
                        else
                            functionGenerationContext.intToPtr(Int32(bbResumeId + 1).llvm, int8TypePtr)
             }
-            return super.genGetValue(value)
+            return super.genGetValue(value, resultSlot)
         }
     }
 
@@ -2344,11 +2350,11 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
 
         using (SuspensionPointScope(expression.suspensionPointIdParameter, bbResume, id)) {
             continuationBlock(expression.type, expression.result.startLocation).run {
-                val normalResult = evaluateExpression(expression.result)
+                val normalResult = evaluateExpression(expression.result, null)
                 functionGenerationContext.jump(this, normalResult)
 
                 functionGenerationContext.positionAtEnd(bbResume)
-                val resumeResult = evaluateExpression(expression.resumeResult)
+                val resumeResult = evaluateExpression(expression.resumeResult, null)
                 functionGenerationContext.jump(this, resumeResult)
 
                 functionGenerationContext.positionAtEnd(this.block)
@@ -2367,19 +2373,19 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
     //-------------------------------------------------------------------------//
 
     private fun evaluateFunctionCall(callee: IrCall, args: List<LLVMValueRef>,
-                                     resultLifetime: Lifetime): LLVMValueRef {
+                                     resultLifetime: Lifetime, resultSlot: LLVMValueRef?): LLVMValueRef {
         val function = callee.symbol.owner
 
         val argsWithContinuationIfNeeded = if (function.isSuspend)
                                                args + getContinuation()
                                            else args
         return when {
-            function.isTypedIntrinsic -> intrinsicGenerator.evaluateCall(callee, args)
+            function.isTypedIntrinsic -> intrinsicGenerator.evaluateCall(callee, args, resultSlot)
             function.isBuiltInOperator -> evaluateOperatorCall(callee, argsWithContinuationIfNeeded)
             function.origin == DECLARATION_ORIGIN_FILE_GLOBAL_INITIALIZER -> evaluateFileGlobalInitializerCall(function)
             function.origin == DECLARATION_ORIGIN_FILE_THREAD_LOCAL_INITIALIZER -> evaluateFileThreadLocalInitializerCall(function)
             function.origin == DECLARATION_ORIGIN_FILE_STANDALONE_THREAD_LOCAL_INITIALIZER -> evaluateFileStandaloneThreadLocalInitializerCall(function)
-            else -> evaluateSimpleFunctionCall(function, argsWithContinuationIfNeeded, resultLifetime, callee.superQualifierSymbol?.owner)
+            else -> evaluateSimpleFunctionCall(function, argsWithContinuationIfNeeded, resultLifetime, callee.superQualifierSymbol?.owner, resultSlot)
         }
     }
 
@@ -2452,12 +2458,12 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
 
     private fun evaluateSimpleFunctionCall(
             function: IrFunction, args: List<LLVMValueRef>,
-            resultLifetime: Lifetime, superClass: IrClass? = null): LLVMValueRef {
+            resultLifetime: Lifetime, superClass: IrClass? = null, resultSlot: LLVMValueRef? = null): LLVMValueRef {
         //context.log{"evaluateSimpleFunctionCall : $tmpVariableName = ${ir2string(value)}"}
         if (superClass == null && function is IrSimpleFunction && function.isOverridable)
-            return callVirtual(function, args, resultLifetime)
+            return callVirtual(function, args, resultLifetime, resultSlot)
         else
-            return callDirect(function, args, resultLifetime)
+            return callDirect(function, args, resultLifetime, resultSlot)
     }
 
     //-------------------------------------------------------------------------//
@@ -2465,7 +2471,7 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
         return lifetimes.getOrElse(callee) { /* TODO: make IRRELEVANT */ Lifetime.GLOBAL }
     }
 
-    private fun evaluateConstructorCall(callee: IrConstructorCall, args: List<LLVMValueRef>): LLVMValueRef {
+    private fun evaluateConstructorCall(callee: IrConstructorCall, args: List<LLVMValueRef>, resultSlot: LLVMValueRef?): LLVMValueRef {
         context.log{"evaluateConstructorCall        : ${ir2string(callee)}"}
         return memScoped {
             val constructedClass = callee.symbol.owner.constructedClass
@@ -2473,19 +2479,19 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
                 constructedClass.isArray -> {
                     assert(args.isNotEmpty() && args[0].type == int32Type)
                     functionGenerationContext.allocArray(constructedClass, args[0],
-                            resultLifetime(callee), currentCodeContext.exceptionHandler)
+                            resultLifetime(callee), currentCodeContext.exceptionHandler, resultSlot = resultSlot)
                 }
                 constructedClass == context.ir.symbols.string.owner -> {
                     // TODO: consider returning the empty string literal instead.
                     assert(args.isEmpty())
                     functionGenerationContext.allocArray(constructedClass, count = kImmZero,
-                            lifetime = resultLifetime(callee), exceptionHandler = currentCodeContext.exceptionHandler)
+                            lifetime = resultLifetime(callee), exceptionHandler = currentCodeContext.exceptionHandler, resultSlot = resultSlot)
                 }
 
                 constructedClass.isObjCClass() -> error("Call should've been lowered: ${callee.dump()}")
 
                 else -> functionGenerationContext.allocInstance(constructedClass, resultLifetime(callee),
-                        currentCodeContext.stackLocalsManager)
+                        currentCodeContext.stackLocalsManager, resultSlot = resultSlot)
             }
             evaluateSimpleFunctionCall(callee.symbol.owner,
                     listOf(thisValue) + args, Lifetime.IRRELEVANT /* constructor doesn't return anything */)
@@ -2571,7 +2577,8 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
                             callDirect(
                                     context.ir.symbols.throwIllegalArgumentExceptionWithMessage.owner,
                                     args,
-                                    Lifetime.GLOBAL
+                                    Lifetime.GLOBAL,
+                                    null
                             )
                         }
                         else -> TODO(function.name.toString())
@@ -2583,16 +2590,16 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
 
     //-------------------------------------------------------------------------//
 
-    fun callDirect(function: IrFunction, args: List<LLVMValueRef>, resultLifetime: Lifetime): LLVMValueRef {
+    fun callDirect(function: IrFunction, args: List<LLVMValueRef>, resultLifetime: Lifetime, resultSlot: LLVMValueRef?): LLVMValueRef {
         val functionDeclarations = codegen.llvmFunction(function.target)
-        return call(function, functionDeclarations, args, resultLifetime)
+        return call(function, functionDeclarations, args, resultLifetime, resultSlot)
     }
 
     //-------------------------------------------------------------------------//
 
-    fun callVirtual(function: IrFunction, args: List<LLVMValueRef>, resultLifetime: Lifetime): LLVMValueRef {
+    fun callVirtual(function: IrFunction, args: List<LLVMValueRef>, resultLifetime: Lifetime, resultSlot: LLVMValueRef?): LLVMValueRef {
         val functionDeclarations = functionGenerationContext.lookupVirtualImpl(args.first(), function)
-        return call(function, functionDeclarations, args, resultLifetime)
+        return call(function, functionDeclarations, args, resultLifetime, resultSlot)
     }
 
     //-------------------------------------------------------------------------//
@@ -2610,7 +2617,7 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
         }
 
     private fun call(function: IrFunction, llvmCallable: LlvmCallable, args: List<LLVMValueRef>,
-                     resultLifetime: Lifetime): LLVMValueRef {
+                     resultLifetime: Lifetime, resultSlot: LLVMValueRef?): LLVMValueRef {
         check(!function.isTypedIntrinsic)
 
         val needsNativeThreadState = function.needsNativeThreadState
@@ -2627,7 +2634,7 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
             functionGenerationContext.switchThreadState(ThreadState.Native)
         }
 
-        val result = call(llvmCallable, args, resultLifetime, exceptionHandler)
+        val result = call(llvmCallable, args, resultLifetime, exceptionHandler, resultSlot)
 
         when {
             !function.isSuspend && function.returnType.isNothing() ->
@@ -2647,16 +2654,17 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
             function: LlvmCallable, args: List<LLVMValueRef>,
             resultLifetime: Lifetime = Lifetime.IRRELEVANT,
             exceptionHandler: ExceptionHandler = currentCodeContext.exceptionHandler,
+            resultSlot: LLVMValueRef? = null
     ): LLVMValueRef {
-        return functionGenerationContext.call(function, args, resultLifetime, exceptionHandler)
+        return functionGenerationContext.call(function, args, resultLifetime, exceptionHandler, resultSlot = resultSlot)
     }
 
     //-------------------------------------------------------------------------//
 
-    private fun delegatingConstructorCall(constructor: IrConstructor, args: List<LLVMValueRef>): LLVMValueRef {
+    private fun delegatingConstructorCall(constructor: IrConstructor, args: List<LLVMValueRef>, resultSlot: LLVMValueRef?): LLVMValueRef {
 
         val constructedClass = functionGenerationContext.constructedClass!!
-        val thisPtr = currentCodeContext.genGetValue(constructedClass.thisReceiver!!)
+        val thisPtr = currentCodeContext.genGetValue(constructedClass.thisReceiver!!, null)
 
         if (constructor.constructedClass.isExternalObjCClass() || constructor.constructedClass.isAny()) {
             assert(args.isEmpty())
@@ -2672,7 +2680,7 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
         }
 
         return callDirect(constructor, listOf(thisPtrArg) + args,
-                Lifetime.IRRELEVANT /* no value returned */)
+                Lifetime.IRRELEVANT /* no value returned */, resultSlot)
     }
 
     //-------------------------------------------------------------------------//
