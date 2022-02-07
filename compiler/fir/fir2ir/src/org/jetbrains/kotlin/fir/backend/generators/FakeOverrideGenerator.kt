@@ -32,6 +32,8 @@ import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSymbol
 import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.util.IdSignature
+import org.jetbrains.kotlin.ir.util.fqNameForIrSerialization
+import org.jetbrains.kotlin.ir.util.fqNameWhenAvailable
 import org.jetbrains.kotlin.ir.util.parentAsClass
 import org.jetbrains.kotlin.load.java.JavaDescriptorVisibilities
 import org.jetbrains.kotlin.name.Name
@@ -370,12 +372,18 @@ class FakeOverrideGenerator(
             when (declaration) {
                 is IrSimpleFunction -> {
                     val baseSymbols = getOverriddenSymbolsForFakeOverride(declaration)!!
+                    if (baseSymbols.isEmpty()) {
+                        throw AssertionError("No overridden symbol found for fake override ${declaration.fqNameForIrSerialization}")
+                    }
                     declaration.withFunction {
                         overriddenSymbols = baseSymbols
                     }
                 }
                 is IrProperty -> {
                     val baseSymbols = basePropertySymbols[declaration]!!
+                    if (baseSymbols.isEmpty()) {
+                        throw AssertionError("No overridden symbol found for fake override ${declaration.fqNameWhenAvailable}")
+                    }
                     declaration.withProperty {
                         discardAccessorsAccordingToBaseVisibility(baseSymbols)
                         setOverriddenSymbolsForProperty(declarationStorage, declaration.isVar, baseSymbols)

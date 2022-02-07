@@ -220,7 +220,11 @@ class Fir2IrLazyProperty(
             scopeSession,
             declarationStorage,
             fakeOverrideGenerator
-        )
+        ).apply {
+            if (isFakeOverride && isEmpty()) {
+                throw AssertionError("No overridden symbol found for fake override ${fir.symbol.callableId}")
+            }
+        }
     }
 
     override var metadata: MetadataSource?

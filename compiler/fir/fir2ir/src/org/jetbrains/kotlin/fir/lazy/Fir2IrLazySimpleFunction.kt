@@ -82,7 +82,12 @@ class Fir2IrLazySimpleFunction(
             fakeOverrideGenerator.calcBaseSymbolsForFakeOverrideFunction(
                 firParent, this, fir.symbol
             )
-            fakeOverrideGenerator.getOverriddenSymbolsForFakeOverride(this)?.let { return@lazyVar it }
+            fakeOverrideGenerator.getOverriddenSymbolsForFakeOverride(this)?.let {
+                if (it.isEmpty()) {
+                    throw AssertionError("No overridden symbol found for fake override ${fir.symbol.callableId}")
+                }
+                return@lazyVar it
+            }
         }
         fir.generateOverriddenFunctionSymbols(firParent, session, scopeSession, declarationStorage, fakeOverrideGenerator)
     }
