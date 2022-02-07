@@ -5790,6 +5790,12 @@ public class FirDiagnosticTestGenerated extends AbstractFirDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("arrayListInheritor.kt")
+            public void testArrayListInheritor() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/problems/arrayListInheritor.kt");
+            }
+
+            @Test
             @TestMetadata("capturedTypeInEquality.kt")
             public void testCapturedTypeInEquality() throws Exception {
                 runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/problems/capturedTypeInEquality.kt");
