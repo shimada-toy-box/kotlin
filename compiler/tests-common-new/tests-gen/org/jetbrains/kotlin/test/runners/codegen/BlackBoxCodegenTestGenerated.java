@@ -16790,6 +16790,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         }
 
         @Test
+        @TestMetadata("putCopyableUserData.kt")
+        public void testPutCopyableUserData() throws Exception {
+            runTest("compiler/testData/codegen/box/fir/putCopyableUserData.kt");
+        }
+
+        @Test
         @TestMetadata("SuspendExtension.kt")
         public void testSuspendExtension() throws Exception {
             runTest("compiler/testData/codegen/box/fir/SuspendExtension.kt");
