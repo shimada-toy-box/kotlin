@@ -55,7 +55,7 @@ interface IrTypeArgument : TypeArgumentMarker {
     override fun hashCode(): Int
 }
 
-interface IrStarProjection : IrTypeArgument
+abstract class IrStarProjection : IrTypeArgument
 
 interface IrTypeProjection : IrTypeArgument {
     val variance: Variance

@@ -42,7 +42,7 @@ val IrType.originalKotlinType: KotlinType?
     get() = safeAs<IrTypeBase>()?.kotlinType
 
 
-object IrStarProjectionImpl : IrStarProjection {
+object IrStarProjectionImpl : IrStarProjection() {
     override fun equals(other: Any?): Boolean = this === other
 
     override fun hashCode(): Int = System.identityHashCode(this)
