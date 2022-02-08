@@ -407,13 +407,15 @@ fun FirTypeScope.processOverriddenFunctionsFromSuperClasses(
     containingClass: FirClass,
     processor: (FirNamedFunctionSymbol) -> ProcessorAction
 ): ProcessorAction =
-    processDirectOverriddenFunctionsWithBaseScope(functionSymbol, backendCompatibilityMode = true)
-    { overridden, baseScope ->
-        if (overridden.containingClass() == containingClass.symbol.toLookupTag()) {
-            baseScope.processOverriddenFunctionsFromSuperClasses(overridden, containingClass, processor)
-        } else {
-            processor(overridden)
-        }
+    processDirectOverriddenFunctionsWithBaseScope(functionSymbol, backendCompatibilityMode = true) { overridden, _ ->
+        val unwrapped = if (overridden.fir.isSubstitutionOverride &&
+            overridden.dispatchReceiverClassOrNull() == containingClass.symbol.toLookupTag()
+        )
+            overridden.originalForSubstitutionOverride!!
+        else
+            overridden
+
+        processor(unwrapped)
     }
 
 fun FirTypeScope.processOverriddenPropertiesFromSuperClasses(
@@ -421,12 +423,15 @@ fun FirTypeScope.processOverriddenPropertiesFromSuperClasses(
     containingClass: FirClass,
     processor: (FirPropertySymbol) -> ProcessorAction
 ): ProcessorAction =
-    processDirectOverriddenPropertiesWithBaseScope(propertySymbol, backendCompatibilityMode = true) { overridden, baseScope ->
-        if (overridden.containingClass() == containingClass.symbol.toLookupTag()) {
-            baseScope.processOverriddenPropertiesFromSuperClasses(overridden, containingClass, processor)
-        } else {
-            processor(overridden)
-        }
+    processDirectOverriddenPropertiesWithBaseScope(propertySymbol, backendCompatibilityMode = true) { overridden, _ ->
+        val unwrapped = if (overridden.fir.isSubstitutionOverride &&
+            overridden.dispatchReceiverClassOrNull() == containingClass.symbol.toLookupTag()
+        )
+            overridden.originalForSubstitutionOverride!!
+        else
+            overridden
+
+        processor(unwrapped)
     }
 
 private fun FirClass.getSuperTypesAsIrClasses(
