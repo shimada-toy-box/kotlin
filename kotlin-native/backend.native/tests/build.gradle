@@ -196,7 +196,11 @@ run {
     // Add regular gradle test tasks
     dependsOn(tasksOf(Test))
     dependsOn(tasksOf(CoverageTest))
-    dependsOn(tasksOf(FileCheckTest))
+    // Bitcode that is generated in presence of caches differs from the "closed world"-generated,
+    // so disable these tests for now.
+    if (cacheTesting == null) {
+        dependsOn(tasksOf(FileCheckTest))
+    }
     dependsOn(":kotlin-native:Interop:Indexer:check")
 }
 
@@ -5993,6 +5997,7 @@ Task fileCheckTest(String name, Closure<FileCheckTest> configureClosure) {
         task.configure(configureClosure)
         task.llvmIr = project.file("$testOutputFileCheck/$name/$target/out.${task.phaseToCheck}.ll")
         def target = task.target
+        boolean isCrossCompiling = target != project.target
         if (task.enabled) {
             konanArtifacts {
                 def lib = task.interop
@@ -6007,7 +6012,9 @@ Task fileCheckTest(String name, Closure<FileCheckTest> configureClosure) {
                     program(name, targets: [target]) {
                         srcFiles task.annotatedSource
                         baseDir "$testOutputFileCheck/$name"
-                        extraOpts project.globalTestArgs
+                        if (!isCrossCompiling) {
+                            extraOpts project.globalTestArgs
+                        }
                         extraOpts "-Xtemporary-files-dir=$testOutputFileCheck/$name/$target"
                         extraOpts "-Xsave-llvm-ir-after=${task.phaseToCheck}"
                         if (lib != null) {
@@ -6021,7 +6028,9 @@ Task fileCheckTest(String name, Closure<FileCheckTest> configureClosure) {
                     framework(name, targets: [target]) {
                         srcFiles task.annotatedSource
                         baseDir "$testOutputFileCheck/$name"
-                        extraOpts project.globalTestArgs
+                        if (!isCrossCompiling) {
+                            extraOpts project.globalTestArgs
+                        }
                         extraOpts "-Xtemporary-files-dir=$testOutputFileCheck/$name/$target", "-Xmeaningful-bridge-names"
                         extraOpts "-Xsave-llvm-ir-after=${task.phaseToCheck}"
 
