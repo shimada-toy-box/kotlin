@@ -91,10 +91,10 @@ class KotlinBuildStatListener(
             }
             return CompileStatData(
                 durationMs = durationMs, taskResult = taskResult.name, label = label,
-                buildTimesMs = buildTimesMs, perfData = perfData, projectName = projectName, taskName = taskPath, changes = changes,
+                buildTimesMetrics = buildTimesMs, performanceMetrics = perfData, projectName = projectName, taskName = taskPath, changes = changes,
                 tags = taskExecutionResult?.taskInfo?.properties?.map { it.name } ?: emptyList(),
                 nonIncrementalAttributes = taskExecutionResult?.buildMetrics?.buildAttributes?.asMap() ?: emptyMap(),
-                hostName = hostName, kotlinVersion = kotlinVersion, buildUuid = uuid, timeInMillis = System.currentTimeMillis()
+                hostName = hostName, kotlinVersion = kotlinVersion, buildUuid = uuid, finishTime = System.currentTimeMillis()
             )
         }
 

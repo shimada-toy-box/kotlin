@@ -300,7 +300,7 @@ internal class GradleKotlinCompilerWork @Inject constructor(
         log.info("Options for KOTLIN DAEMON: $compilationOptions")
         val servicesFacade = GradleIncrementalCompilerServicesFacadeImpl(log, bufferingMessageCollector)
         val compilationResults = GradleCompilationResults(log, projectRootFile)
-        return metrics.measure(BuildTime.RUN_COMPILER) {
+        return metrics.measure(BuildTime.RUN_COMPILATION) {
             daemon.compile(sessionId, compilerArgs, compilationOptions, servicesFacade, compilationResults)
         }.also {
             metrics.addMetrics(compilationResults.buildMetrics)

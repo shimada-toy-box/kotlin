@@ -10,7 +10,6 @@ import org.gradle.api.logging.Logging
 import org.jetbrains.kotlin.gradle.plugin.stat.CompileStatData
 import org.jetbrains.kotlin.gradle.plugin.stat.ReportStatistics
 import org.jetbrains.kotlin.konan.file.File
-import java.util.function.Consumer
 import kotlin.system.measureTimeMillis
 
 class ReportStatisticsToBuildScan(
@@ -52,8 +51,8 @@ class ReportStatisticsToBuildScan(
         data.changes.joinTo(readableString, prefix = "Changes: [", postfix = "]; ") { it.substringAfterLast(File.separator) }
 
         val timeData =
-            data.buildTimesMs.map { (key, value) -> "${key.readableString}: ${value}ms" } //sometimes it is better to have separate variable to be able debug
-        val perfData = data.perfData.map { (key, value) -> "${key.readableString}: ${readableFileLength(value)}" }
+            data.buildTimesMetrics.map { (key, value) -> "${key.readableString}: ${value}ms" } //sometimes it is better to have separate variable to be able debug
+        val perfData = data.performanceMetrics.map { (key, value) -> "${key.readableString}: ${readableFileLength(value)}" }
         timeData.union(perfData).joinTo(readableString, ",", "Performance: [", "]")
 
         return splitStringIfNeed(readableString.toString(), lengthLimit)
