@@ -110,7 +110,8 @@ class JavaClassMembersEnhancementScope(
         } else {
             callableSymbol
         }
-        val original = enhancedToOriginalMap[unwrappedSymbol] ?: return ProcessorAction.NONE
+        val original = enhancedToOriginalMap[unwrappedSymbol]
+            ?: return ProcessorAction.NONE
         return useSiteMemberScope.processDirectOverriddenCallables(original, backendCompatibilityMode, processor)
     }
 

@@ -177,6 +177,9 @@ class Fir2IrLazyClass(
 
         val ownerLookupTag = fir.symbol.toLookupTag()
         for (name in scope.getCallableNames()) {
+            if (name.asString() == "remove") {
+                println()
+            }
             scope.processFunctionsByName(name) {
                 if (it.isSubstitutionOrIntersectionOverride) return@processFunctionsByName
                 if (it.dispatchReceiverClassOrNull() == ownerLookupTag) {

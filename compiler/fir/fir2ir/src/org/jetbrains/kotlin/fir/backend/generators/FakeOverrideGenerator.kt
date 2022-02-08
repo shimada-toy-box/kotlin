@@ -33,7 +33,6 @@ import org.jetbrains.kotlin.ir.symbols.IrSymbol
 import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.util.IdSignature
 import org.jetbrains.kotlin.ir.util.fqNameForIrSerialization
-import org.jetbrains.kotlin.ir.util.fqNameWhenAvailable
 import org.jetbrains.kotlin.ir.util.parentAsClass
 import org.jetbrains.kotlin.load.java.JavaDescriptorVisibilities
 import org.jetbrains.kotlin.name.Name
@@ -169,7 +168,7 @@ class FakeOverrideGenerator(
         fakeOverride: IrSimpleFunction,
         originalSymbol: FirNamedFunctionSymbol,
     ) {
-        val scope = klass.unsubstitutedScope(session, scopeSession, withForcedTypeCalculator = true)
+        val scope = klass.unsubstitutedScope(session, scopeSession, withForcedTypeCalculator = false)
         val classLookupTag = klass.symbol.toLookupTag()
         val baseFirSymbolsForFakeOverride =
             if (originalSymbol.shouldHaveComputedBaseSymbolsForClass(classLookupTag)) {
@@ -178,6 +177,10 @@ class FakeOverrideGenerator(
                         function,
                         backendCompatibilityMode = true
                     )
+                }.apply {
+                    if (isEmpty()) {
+                        throw AssertionError("No overridden symbol found for fake override ${fakeOverride.fqNameForIrSerialization} in scope ${scope::class.java}")
+                    }
                 }
             } else {
                 listOf(originalSymbol)
@@ -233,8 +236,8 @@ class FakeOverrideGenerator(
                         it
                 }
                 val firstOverride = overriddenSymbols.firstOrNull()?.fir
-                if (firstOverride == null ||
-                    overriddenSymbols.size == 1 ||
+                    ?: throw AssertionError("No overridden symbols found for ${originalSymbol.callableId}")
+                if (overriddenSymbols.size == 1 ||
                     originalDeclaration.containsOverride(firstOverride)
                 ) {
                     // Just take it, it's from the first supertype or from the only supertype
@@ -372,18 +375,12 @@ class FakeOverrideGenerator(
             when (declaration) {
                 is IrSimpleFunction -> {
                     val baseSymbols = getOverriddenSymbolsForFakeOverride(declaration)!!
-                    if (baseSymbols.isEmpty()) {
-                        throw AssertionError("No overridden symbol found for fake override ${declaration.fqNameForIrSerialization}")
-                    }
                     declaration.withFunction {
                         overriddenSymbols = baseSymbols
                     }
                 }
                 is IrProperty -> {
                     val baseSymbols = basePropertySymbols[declaration]!!
-                    if (baseSymbols.isEmpty()) {
-                        throw AssertionError("No overridden symbol found for fake override ${declaration.fqNameWhenAvailable}")
-                    }
                     declaration.withProperty {
                         discardAccessorsAccordingToBaseVisibility(baseSymbols)
                         setOverriddenSymbolsForProperty(declarationStorage, declaration.isVar, baseSymbols)

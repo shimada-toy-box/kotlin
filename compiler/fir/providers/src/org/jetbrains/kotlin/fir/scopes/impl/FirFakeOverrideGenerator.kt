@@ -85,6 +85,11 @@ object FirFakeOverrideGenerator {
             fakeOverrideSubstitution = fakeOverrideSubstitution
         ).apply {
             originalForSubstitutionOverrideAttr = baseFunction
+            if (fakeOverrideSymbol.callableId.callableName.asString() == "remove" &&
+                fakeOverrideSymbol.callableId.classId?.shortClassName?.asString() == "ArrayList"
+            ) {
+                println()
+            }
         }
     }
 

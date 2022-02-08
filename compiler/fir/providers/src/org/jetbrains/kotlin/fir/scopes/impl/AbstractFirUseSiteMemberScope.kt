@@ -181,7 +181,8 @@ abstract class AbstractFirUseSiteMemberScope(
                     ?.firstOrNull {
                         it.chosenSymbol == callableSymbol ||
                                 it.chosenSymbol == callableSymbol.fir.originalForSubstitutionOverride?.symbol
-                    } ?: return ProcessorAction.NONE
+                    }
+                    ?: return ProcessorAction.NONE
                 if (backendCompatibilityMode || resultOfIntersection.isIntersectionOverride()) {
                     for ((overridden, baseScope) in resultOfIntersection.overriddenMembers) {
                         if (!processor(overridden, baseScope)) return ProcessorAction.STOP
