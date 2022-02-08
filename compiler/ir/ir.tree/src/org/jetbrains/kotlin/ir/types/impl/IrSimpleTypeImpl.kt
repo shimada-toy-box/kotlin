@@ -12,16 +12,10 @@ import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.Variance
 
-abstract class IrAbstractSimpleType(kotlinType: KotlinType?) : IrTypeBase(kotlinType), IrSimpleType {
+abstract class IrAbstractSimpleType(kotlinType: KotlinType?) : IrSimpleType(kotlinType) {
 
     override val variance: Variance
         get() = Variance.INVARIANT
-
-    abstract override val classifier: IrClassifierSymbol
-    abstract override val hasQuestionMark: Boolean
-    abstract override val arguments: List<IrTypeArgument>
-    abstract override val annotations: List<IrConstructorCall>
-    abstract override val abbreviation: IrTypeAbbreviation?
 
     override fun equals(other: Any?): Boolean =
         other is IrAbstractSimpleType &&

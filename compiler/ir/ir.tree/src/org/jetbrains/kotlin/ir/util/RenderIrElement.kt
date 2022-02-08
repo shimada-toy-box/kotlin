@@ -28,7 +28,11 @@ import org.jetbrains.kotlin.utils.addIfNotNull
 fun IrElement.render() =
     accept(RenderIrElementVisitor(), null)
 
-class RenderIrElementVisitor(private val normalizeNames: Boolean = false, private val verboseErrorTypes: Boolean = true) : IrElementVisitor<String, Nothing?> {
+class RenderIrElementVisitor(
+    private val normalizeNames: Boolean = false,
+    private val verboseErrorTypes: Boolean = true
+) : IrElementVisitor<String, Nothing?> {
+
     private val nameMap: MutableMap<IrVariableSymbol, String> = mutableMapOf()
     private var temporaryIndex: Int = 0
 
@@ -805,6 +809,8 @@ private fun IrDeclaration.renderDeclarationParentFqn(sb: StringBuilder) {
 }
 
 fun IrType.render() = RenderIrElementVisitor().renderType(this)
+
+fun IrSimpleType.render() = RenderIrElementVisitor().renderType(this)
 
 fun IrTypeArgument.render() =
     when (this) {

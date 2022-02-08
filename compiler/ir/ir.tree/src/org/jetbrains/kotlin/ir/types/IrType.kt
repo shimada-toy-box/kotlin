@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.ir.types
 import org.jetbrains.kotlin.ir.declarations.IrAnnotationContainer
 import org.jetbrains.kotlin.ir.symbols.IrClassifierSymbol
 import org.jetbrains.kotlin.ir.symbols.IrTypeAliasSymbol
+import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.types.model.*
 
@@ -34,11 +35,18 @@ interface IrDefinitelyNotNullType : IrType, DefinitelyNotNullTypeMarker {
     val original: IrType
 }
 
-interface IrSimpleType : IrType, SimpleTypeMarker, TypeArgumentListMarker {
-    val classifier: IrClassifierSymbol
-    val hasQuestionMark: Boolean
-    val arguments: List<IrTypeArgument>
-    val abbreviation: IrTypeAbbreviation?
+abstract class IrTypeBase(val kotlinType: KotlinType?) : IrType, IrTypeProjection {
+    override val type: IrType get() = this
+}
+
+abstract class IrSimpleType(kotlinType: KotlinType?) : IrTypeBase(kotlinType), SimpleTypeMarker, TypeArgumentListMarker {
+    abstract val classifier: IrClassifierSymbol
+    abstract val hasQuestionMark: Boolean
+    abstract val arguments: List<IrTypeArgument>
+    abstract val abbreviation: IrTypeAbbreviation?
+
+    override val variance: Variance
+        get() = Variance.INVARIANT
 }
 
 interface IrTypeArgument : TypeArgumentMarker {

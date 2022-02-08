@@ -17,10 +17,6 @@ import org.jetbrains.kotlin.types.model.CapturedTypeConstructorMarker
 import org.jetbrains.kotlin.types.model.CapturedTypeMarker
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-abstract class IrTypeBase(val kotlinType: KotlinType?) : IrType, IrTypeProjection {
-    override val type: IrType get() = this
-}
-
 class IrErrorTypeImpl(
     kotlinType: KotlinType?,
     override val annotations: List<IrConstructorCall>,
@@ -81,7 +77,7 @@ class IrCapturedType(
     val lowerType: IrType?,
     projection: IrTypeArgument,
     typeParameter: IrTypeParameter
-) : IrSimpleType, CapturedTypeMarker {
+) : IrSimpleType(null), CapturedTypeMarker {
 
     class Constructor(val argument: IrTypeArgument, val typeParameter: IrTypeParameter) :
         CapturedTypeConstructorMarker {
