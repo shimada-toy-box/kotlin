@@ -63,6 +63,22 @@ val relocatedJar by task<ShadowJar> {
     }
 }
 
+val normalizeComponentsXmlEndings by tasks.registering {
+    dependsOn(relocatedJar)
+    val outputDirectory = buildDir.resolve(name)
+    val outputFile = outputDirectory.resolve("components.xml")
+    outputs.file(outputFile)
+
+    doFirst {
+        val componentsXml = zipTree(relocatedJar.get().singleOutputFile()).matching {
+            include { it.path == ComponentsXmlResourceTransformer.COMPONENTS_XML_PATH }
+        }.single().readText()
+        val processedComponentsXml = componentsXml.replace("\n\r", "\n")
+        outputDirectory.mkdirs()
+        outputFile.writeText(processedComponentsXml)
+    }
+}
+
 val proguard by task<CacheableProguardTask> {
     dependsOn(relocatedJar)
     configuration("dependencies-maven.pro")
@@ -99,10 +115,21 @@ val proguard by task<CacheableProguardTask> {
 
 val resultJar by task<Jar> {
     val pack = if (kotlinBuildProperties.proguard) proguard else relocatedJar
+
     dependsOn(pack)
+    dependsOn(normalizeComponentsXmlEndings)
+
     setupPublicJar(jarBaseName)
     from {
-        zipTree(pack.get().singleOutputFile())
+        zipTree(pack.get().singleOutputFile()).matching {
+            exclude { it.path == ComponentsXmlResourceTransformer.COMPONENTS_XML_PATH }
+        }
+    }
+
+    from {
+        normalizeComponentsXmlEndings.get().singleOutputFile()
+    }.apply {
+        into(ComponentsXmlResourceTransformer.COMPONENTS_XML_PATH.substringBeforeLast("/"))
     }
 }
 
