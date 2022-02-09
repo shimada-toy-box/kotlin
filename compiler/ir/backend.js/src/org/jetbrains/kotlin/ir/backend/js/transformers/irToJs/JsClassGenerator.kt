@@ -51,6 +51,10 @@ class JsClassGenerator(private val irClass: IrClass, val context: JsGenerationCo
 
         val jsClass = JsClass(name = className, baseClass = baseClassRef)
 
+        if (!baseClass.isAnyOrNull()) {
+            jsClass.baseClass = baseClassRef
+        }
+
         if (es6mode) classModel.preDeclarationBlock.statements += jsClass.makeStmt()
 
         for (declaration in irClass.declarations) {
@@ -360,6 +364,10 @@ class JsClassGenerator(private val irClass: IrClass, val context: JsGenerationCo
 
         generateFastPrototype()?.let { metadataLiteral.propertyInitializers += it }
 
+        if (irClass.isInterface) {
+            metadataLiteral.propertyInitializers += generateInterfaceId()
+        }
+
         if (isCoroutineClass()) {
             metadataLiteral.propertyInitializers += generateSuspendArity()
         }
@@ -378,22 +386,47 @@ class JsClassGenerator(private val irClass: IrClass, val context: JsGenerationCo
         return JsPropertyInitializer(JsNameRef(Namer.METADATA_SUSPEND_ARITY), JsArrayLiteral(arity))
     }
 
-    private fun generateSuperClasses(): JsPropertyInitializer {
+    private fun generateInterfaceId(): JsPropertyInitializer {
         return JsPropertyInitializer(
-            JsNameRef(Namer.METADATA_INTERFACES),
-            JsArrayLiteral(
-                irClass.superTypes.mapNotNull {
-                    val symbol = it.classifierOrFail as IrClassSymbol
-                    val isFunctionType = it.isFunctionType()
-                    // TODO: make sure that there is a test which breaks when isExternal is used here instead of isEffectivelyExternal
-                    val requireInMetadata = if (context.staticContext.backendContext.baseClassIntoMetadata)
-                        !it.isAny()
-                    else
-                        symbol.isInterface
+            JsNameRef(Namer.METADATA_INTERFACE_ID),
+            JsIntLiteral(irClass.hashCode())
+        )
+    }
 
-                    if (requireInMetadata && !isFunctionType && !symbol.isEffectivelyExternal) {
-                        JsNameRef(context.getNameForClass(symbol.owner))
-                    } else null
+    private fun generateSuperClasses(): List<JsPropertyInitializer> {
+        val parentSymbols = irClass.superTypes.mapNotNull {
+            val symbol = it.classifierOrFail as IrClassSymbol
+            val isFunctionType = it.isFunctionType()
+            // TODO: make sure that there is a test which breaks when isExternal is used here instead of isEffectivelyExternal
+            val requireInMetadata = if (context.staticContext.backendContext.baseClassIntoMetadata)
+                !it.isAny()
+            else
+                symbol.isInterface
+
+            if (requireInMetadata && !isFunctionType && !symbol.isEffectivelyExternal) {
+                symbol
+            } else null
+        }
+        return listOf(
+            JsPropertyInitializer(
+                JsNameRef(Namer.METADATA_INTERFACES),
+                JsArrayLiteral(parentSymbols.map { JsNameRef(context.getNameForClass(it.owner)) })
+            ),
+            JsPropertyInitializer(
+                JsNameRef(Namer.METADATA_INTERFACES_CACHE),
+                JsObjectLiteral().apply {
+                    propertyInitializers += JsPropertyInitializer(
+                        JsNameRef(Namer.METADATA_IS_INTERFACE_MEMO),
+                        JsObjectLiteral().apply {
+                            propertyInitializers += parentSymbols.map {
+                                JsPropertyInitializer(JsIntLiteral(it.owner.hashCode()), JsBooleanLiteral(true))
+                            }
+                        }
+                    )
+                    propertyInitializers += JsPropertyInitializer(
+                        JsNameRef(Namer.METADATA_MEMO_IS_COMPLETE),
+                        JsBooleanLiteral(baseClass.isAnyOrNull() && parentSymbols.isEmpty())
+                    )
                 }
             )
         )
@@ -402,6 +435,9 @@ class JsClassGenerator(private val irClass: IrClass, val context: JsGenerationCo
     private fun generateFastPrototype() = baseClassRef?.let {
         JsPropertyInitializer(JsNameRef(Namer.METADATA_FAST_PROTOTYPE), prototypeOf(it))
     }
+
+    private fun IrType?.isAnyOrNull(): Boolean =
+        this == null || isAny()
 
     private fun IrType.isFunctionType() = isFunctionOrKFunction() || isSuspendFunctionOrKFunction()
 
