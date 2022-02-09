@@ -151,6 +151,7 @@ private fun setTypeKinds(elements: List<Element>) {
             val element = it
             override var kind = it.targetKind
             override var parentNodes = emptyList<Node>()
+            override fun toString(): String = element.name
         }
     }
     val nodes = nodeMap.values.toList()

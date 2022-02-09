@@ -27,6 +27,11 @@ fun solveGraphForClassVsInterface(elements: List<Node>) {
     val elementMapping = ElementMapping(elements)
 
     val solution = solve2sat(elements, elementMapping)
+/*
+    for ((node, klass) in elements.zip(solution)) {
+        println("$node -> ${node.parentNodes} | $klass")
+    }
+*/
     processRequirementsFromConfig(solution, elementMapping)
     updateKinds(solution, elementMapping)
 }

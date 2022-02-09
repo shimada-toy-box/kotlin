@@ -521,6 +521,7 @@ object IrTree : AbstractTreeBuilder() {
         +field("expression", expression, mutable = true, isChild = true)
     }
     val blockBody: ElementConfig by element(Expression) {
+        transform = true
         visitorParent = body
         visitorParam = "body"
 
@@ -652,6 +653,7 @@ object IrTree : AbstractTreeBuilder() {
         +field("inlineFunctionSymbol", functionSymbolType, nullable = true)
     }
     val syntheticBody: ElementConfig by element(Expression) {
+        transform = true
         visitorParent = body
         visitorParam = "body"
 
