@@ -13,11 +13,14 @@ import org.jetbrains.kotlin.fir.declarations.utils.classId
 import org.jetbrains.kotlin.fir.declarations.utils.isExpect
 import org.jetbrains.kotlin.fir.declarations.utils.visibility
 import org.jetbrains.kotlin.fir.symbols.ConeClassLikeLookupTag
+import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.visitors.FirVisitor
 import org.jetbrains.kotlin.ir.util.IdSignature
 
 @NoMutableState
 class FirBasedSignatureComposer(private val mangler: FirMangler) : Fir2IrSignatureComposer {
+    private val signatureCache = mutableMapOf<Pair<FirBasedSymbol<*>, ConeClassLikeLookupTag?>, IdSignature?>()
+
     inner class SignatureBuilder : FirVisitor<Unit, Any?>() {
         var hashId: Long? = null
         var mask = 0L
@@ -60,6 +63,10 @@ class FirBasedSignatureComposer(private val mangler: FirMangler) : Fir2IrSignatu
     }
 
     override fun composeSignature(declaration: FirDeclaration, containingClass: ConeClassLikeLookupTag?): IdSignature? {
+        return signatureCache.getOrPut(declaration.symbol to containingClass) { composeSignatureImpl(declaration, containingClass) }
+    }
+
+    private fun composeSignatureImpl(declaration: FirDeclaration, containingClass: ConeClassLikeLookupTag?): IdSignature? {
         if (declaration is FirAnonymousObject || declaration is FirAnonymousFunction) return null
         if (declaration is FirRegularClass && declaration.classId.isLocal) return null
         if (declaration is FirCallableDeclaration) {
