@@ -254,7 +254,6 @@ message Statement {
         Try try_statement = 37;
         Empty empty = 38;
         SingleLineComment single_line_comment = 39;
-        Code code = 40;
     }
 }
 

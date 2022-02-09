@@ -15664,15 +15664,6 @@ public final class JsAstProtoBuf {
      * <code>optional .org.jetbrains.kotlin.serialization.js.ast.SingleLineComment single_line_comment = 39;</code>
      */
     org.jetbrains.kotlin.serialization.js.ast.JsAstProtoBuf.SingleLineComment getSingleLineComment();
-
-    /**
-     * <code>optional .org.jetbrains.kotlin.serialization.js.ast.Code code = 40;</code>
-     */
-    boolean hasCode();
-    /**
-     * <code>optional .org.jetbrains.kotlin.serialization.js.ast.Code code = 40;</code>
-     */
-    org.jetbrains.kotlin.serialization.js.ast.JsAstProtoBuf.Code getCode();
   }
   /**
    * Protobuf type {@code org.jetbrains.kotlin.serialization.js.ast.Statement}
@@ -15994,19 +15985,6 @@ public final class JsAstProtoBuf {
               statementCase_ = 39;
               break;
             }
-            case 322: {
-              org.jetbrains.kotlin.serialization.js.ast.JsAstProtoBuf.Code.Builder subBuilder = null;
-              if (statementCase_ == 40) {
-                subBuilder = ((org.jetbrains.kotlin.serialization.js.ast.JsAstProtoBuf.Code) statement_).toBuilder();
-              }
-              statement_ = input.readMessage(org.jetbrains.kotlin.serialization.js.ast.JsAstProtoBuf.Code.PARSER, extensionRegistry);
-              if (subBuilder != null) {
-                subBuilder.mergeFrom((org.jetbrains.kotlin.serialization.js.ast.JsAstProtoBuf.Code) statement_);
-                statement_ = subBuilder.buildPartial();
-              }
-              statementCase_ = 40;
-              break;
-            }
           }
         }
       } catch (org.jetbrains.kotlin.protobuf.InvalidProtocolBufferException e) {
@@ -16064,7 +16042,6 @@ public final class JsAstProtoBuf {
       TRY_STATEMENT(37),
       EMPTY(38),
       SINGLE_LINE_COMMENT(39),
-      CODE(40),
       STATEMENT_NOT_SET(0);
       private int value = 0;
       private StatementCase(int value) {
@@ -16091,7 +16068,6 @@ public final class JsAstProtoBuf {
           case 37: return TRY_STATEMENT;
           case 38: return EMPTY;
           case 39: return SINGLE_LINE_COMMENT;
-          case 40: return CODE;
           case 0: return STATEMENT_NOT_SET;
           default: throw new java.lang.IllegalArgumentException(
             "Value is undefined for this oneof enum.");
@@ -16476,23 +16452,6 @@ public final class JsAstProtoBuf {
       return org.jetbrains.kotlin.serialization.js.ast.JsAstProtoBuf.SingleLineComment.getDefaultInstance();
     }
 
-    public static final int CODE_FIELD_NUMBER = 40;
-    /**
-     * <code>optional .org.jetbrains.kotlin.serialization.js.ast.Code code = 40;</code>
-     */
-    public boolean hasCode() {
-      return statementCase_ == 40;
-    }
-    /**
-     * <code>optional .org.jetbrains.kotlin.serialization.js.ast.Code code = 40;</code>
-     */
-    public org.jetbrains.kotlin.serialization.js.ast.JsAstProtoBuf.Code getCode() {
-      if (statementCase_ == 40) {
-         return (org.jetbrains.kotlin.serialization.js.ast.JsAstProtoBuf.Code) statement_;
-      }
-      return org.jetbrains.kotlin.serialization.js.ast.JsAstProtoBuf.Code.getDefaultInstance();
-    }
-
     private void initFields() {
       fileId_ = 0;
       location_ = org.jetbrains.kotlin.serialization.js.ast.JsAstProtoBuf.Location.getDefaultInstance();
@@ -16600,12 +16559,6 @@ public final class JsAstProtoBuf {
           return false;
         }
       }
-      if (hasCode()) {
-        if (!getCode().isInitialized()) {
-          memoizedIsInitialized = 0;
-          return false;
-        }
-      }
       memoizedIsInitialized = 1;
       return true;
     }
@@ -16678,9 +16631,6 @@ public final class JsAstProtoBuf {
       }
       if (statementCase_ == 39) {
         output.writeMessage(39, (org.jetbrains.kotlin.serialization.js.ast.JsAstProtoBuf.SingleLineComment) statement_);
-      }
-      if (statementCase_ == 40) {
-        output.writeMessage(40, (org.jetbrains.kotlin.serialization.js.ast.JsAstProtoBuf.Code) statement_);
       }
       output.writeRawBytes(unknownFields);
     }
@@ -16778,10 +16728,6 @@ public final class JsAstProtoBuf {
       if (statementCase_ == 39) {
         size += org.jetbrains.kotlin.protobuf.CodedOutputStream
           .computeMessageSize(39, (org.jetbrains.kotlin.serialization.js.ast.JsAstProtoBuf.SingleLineComment) statement_);
-      }
-      if (statementCase_ == 40) {
-        size += org.jetbrains.kotlin.protobuf.CodedOutputStream
-          .computeMessageSize(40, (org.jetbrains.kotlin.serialization.js.ast.JsAstProtoBuf.Code) statement_);
       }
       size += unknownFields.size();
       memoizedSerializedSize = size;
@@ -16977,9 +16923,6 @@ public final class JsAstProtoBuf {
         if (statementCase_ == 39) {
           result.statement_ = statement_;
         }
-        if (statementCase_ == 40) {
-          result.statement_ = statement_;
-        }
         result.bitField0_ = to_bitField0_;
         result.statementCase_ = statementCase_;
         return result;
@@ -17071,10 +17014,6 @@ public final class JsAstProtoBuf {
           }
           case SINGLE_LINE_COMMENT: {
             mergeSingleLineComment(other.getSingleLineComment());
-            break;
-          }
-          case CODE: {
-            mergeCode(other.getCode());
             break;
           }
           case STATEMENT_NOT_SET: {
@@ -17179,12 +17118,6 @@ public final class JsAstProtoBuf {
         }
         if (hasSingleLineComment()) {
           if (!getSingleLineComment().isInitialized()) {
-            
-            return false;
-          }
-        }
-        if (hasCode()) {
-          if (!getCode().isInitialized()) {
             
             return false;
           }
@@ -18558,70 +18491,6 @@ public final class JsAstProtoBuf {
        */
       public Builder clearSingleLineComment() {
         if (statementCase_ == 39) {
-          statementCase_ = 0;
-          statement_ = null;
-          
-        }
-        return this;
-      }
-
-      /**
-       * <code>optional .org.jetbrains.kotlin.serialization.js.ast.Code code = 40;</code>
-       */
-      public boolean hasCode() {
-        return statementCase_ == 40;
-      }
-      /**
-       * <code>optional .org.jetbrains.kotlin.serialization.js.ast.Code code = 40;</code>
-       */
-      public org.jetbrains.kotlin.serialization.js.ast.JsAstProtoBuf.Code getCode() {
-        if (statementCase_ == 40) {
-          return (org.jetbrains.kotlin.serialization.js.ast.JsAstProtoBuf.Code) statement_;
-        }
-        return org.jetbrains.kotlin.serialization.js.ast.JsAstProtoBuf.Code.getDefaultInstance();
-      }
-      /**
-       * <code>optional .org.jetbrains.kotlin.serialization.js.ast.Code code = 40;</code>
-       */
-      public Builder setCode(org.jetbrains.kotlin.serialization.js.ast.JsAstProtoBuf.Code value) {
-        if (value == null) {
-          throw new NullPointerException();
-        }
-        statement_ = value;
-
-        statementCase_ = 40;
-        return this;
-      }
-      /**
-       * <code>optional .org.jetbrains.kotlin.serialization.js.ast.Code code = 40;</code>
-       */
-      public Builder setCode(
-          org.jetbrains.kotlin.serialization.js.ast.JsAstProtoBuf.Code.Builder builderForValue) {
-        statement_ = builderForValue.build();
-
-        statementCase_ = 40;
-        return this;
-      }
-      /**
-       * <code>optional .org.jetbrains.kotlin.serialization.js.ast.Code code = 40;</code>
-       */
-      public Builder mergeCode(org.jetbrains.kotlin.serialization.js.ast.JsAstProtoBuf.Code value) {
-        if (statementCase_ == 40 &&
-            statement_ != org.jetbrains.kotlin.serialization.js.ast.JsAstProtoBuf.Code.getDefaultInstance()) {
-          statement_ = org.jetbrains.kotlin.serialization.js.ast.JsAstProtoBuf.Code.newBuilder((org.jetbrains.kotlin.serialization.js.ast.JsAstProtoBuf.Code) statement_)
-              .mergeFrom(value).buildPartial();
-        } else {
-          statement_ = value;
-        }
-
-        statementCase_ = 40;
-        return this;
-      }
-      /**
-       * <code>optional .org.jetbrains.kotlin.serialization.js.ast.Code code = 40;</code>
-       */
-      public Builder clearCode() {
-        if (statementCase_ == 40) {
           statementCase_ = 0;
           statement_ = null;
           

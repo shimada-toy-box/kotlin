@@ -8,7 +8,6 @@ package org.jetbrains.kotlin.ir.backend.js.transformers.irToJs
 import org.jetbrains.kotlin.ir.backend.js.utils.getJsPolyfill
 import org.jetbrains.kotlin.ir.backend.js.utils.hasJsPolyfill
 import org.jetbrains.kotlin.ir.declarations.*
-import org.jetbrains.kotlin.js.backend.ast.JsCode
 import org.jetbrains.kotlin.js.backend.ast.JsStatement
 
 class JsPolyfills {
@@ -32,9 +31,9 @@ class JsPolyfills {
     private fun Iterable<IrDeclaration>.asImplementationList() =
         asSequence().asImplementationList()
 
-    private fun Sequence<IrDeclaration>.asImplementationList(): List<JsCode> =
+    private fun Sequence<IrDeclaration>.asImplementationList(): List<JsStatement> =
         map { it.getJsPolyfill()!! }
             .distinct()
-            .map { JsCode(it) }
+            .flatMap { parseJsCode(it).orEmpty() }
             .toList()
 }

@@ -168,10 +168,6 @@ abstract class JsAstSerializerBase {
             override fun visitSingleLineComment(comment: JsSingleLineComment) {
                 builder.singleLineComment = JsAstProtoBuf.SingleLineComment.newBuilder().setMessage(comment.text).build()
             }
-
-            override fun visitCode(code: JsCode) {
-                builder.code = JsAstProtoBuf.Code.newBuilder().setValue(code.value).build()
-            }
         }
 
         withLocation(statement, { visitor.builder.fileId = it }, { visitor.builder.location = it }) {

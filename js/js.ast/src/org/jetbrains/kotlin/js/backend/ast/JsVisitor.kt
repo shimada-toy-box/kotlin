@@ -171,9 +171,6 @@ abstract class JsVisitor {
     open fun visitImport(import: JsImport): Unit =
         visitElement(import)
 
-    open fun visitCode(code: JsCode): Unit =
-        visitElement(code)
-
     protected open fun visitElement(node: JsNode) {
     }
 }

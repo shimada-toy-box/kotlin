@@ -1,5 +1,5 @@
 // WITH_STDLIB
-// IGNORE_BACKEND: JS
+// TARGET_BACKEND: JS_IR
 // FILE: main.js
 if (!isLegacyBackend()) {
     Int32Array.prototype.sort = function sort(compareFunction) {

@@ -1,5 +1,5 @@
 // WITH_STDLIB
-// IGNORE_BACKEND: JS
+// TARGET_BACKEND: JS_IR
 // FILE: main.js
 if (!isLegacyBackend()) {
     Math.log2 = function log2(x) {

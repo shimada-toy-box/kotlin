@@ -53,10 +53,6 @@ abstract class JsAstDeserializerBase {
             JsDebugger()
         }
 
-        JsAstProtoBuf.Statement.StatementCase.CODE -> {
-            JsCode(proto.code.value)
-        }
-
         JsAstProtoBuf.Statement.StatementCase.EXPRESSION -> {
             val expressionProto = proto.expression
             JsExpressionStatement(deserialize(expressionProto.expression)).also {
