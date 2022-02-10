@@ -585,7 +585,7 @@ internal abstract class FunctionGenerationContext(
         return result
     }
 
-    fun loadSlot(address: LLVMValueRef, isVar: Boolean, name: String = "", resultSlot: LLVMValueRef?): LLVMValueRef {
+    fun loadSlot(address: LLVMValueRef, isVar: Boolean, resultSlot: LLVMValueRef?, name: String = ""): LLVMValueRef {
         val value = LLVMBuildLoad(builder, address, name)!!
         if (isObjectRef(value) && isVar) {
             val slot = resultSlot ?: alloca(LLVMTypeOf(value), variableLocation = null)
@@ -1312,11 +1312,11 @@ internal abstract class FunctionGenerationContext(
         }
 
         if (storageKind == ObjectStorageKind.PERMANENT) {
-            return loadSlot(objectPtr, false, resultSlot = resultSlot)
+            return loadSlot(objectPtr, false, resultSlot)
         }
         val bbInit = basicBlock("label_init", startLocationInfo, endLocationInfo)
         val bbExit = basicBlock("label_continue", startLocationInfo, endLocationInfo)
-        val objectVal = loadSlot(objectPtr, false, resultSlot = resultSlot)
+        val objectVal = loadSlot(objectPtr, false, resultSlot)
         val objectInitialized = icmpUGt(ptrToInt(objectVal, codegen.intPtrType), codegen.immOneIntPtrType)
         val bbCurrent = currentBlock
         condBr(objectInitialized, bbExit, bbInit)
@@ -1332,7 +1332,7 @@ internal abstract class FunctionGenerationContext(
                     context.llvm.initThreadLocalSingleton
                 }
         val args = listOf(objectPtr, typeInfo, ctor)
-        val newValue = call(initFunction, args, Lifetime.GLOBAL, exceptionHandler)
+        val newValue = call(initFunction, args, Lifetime.GLOBAL, exceptionHandler, resultSlot = resultSlot)
         val bbInitResult = currentBlock
         br(bbExit)
 

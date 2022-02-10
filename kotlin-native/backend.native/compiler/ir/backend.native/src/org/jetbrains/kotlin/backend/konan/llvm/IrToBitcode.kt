@@ -1414,7 +1414,13 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
 
     private fun evaluateSetValue(value: IrSetValue): LLVMValueRef {
         context.log{"evaluateSetValue               : ${ir2string(value)}"}
-        val result = evaluateExpression(value.value, null) // TODO: maybe reuse variable slot?
+        /*
+         * Probably, here optimization for not creating extra slot and reuse slot for a variable can be done.
+         * On the other side, eliminating extra slot is not so profitable, as eliminating all slots in a function,
+         * while removing this slot is dangerous, as it needs to be accurate with setting variable inside expression.
+         * So optimization was not implemented here for now.
+         */
+        val result = evaluateExpression(value.value, null)
         val variable = currentCodeContext.getDeclaredValue(value.symbol.owner)
         functionGenerationContext.vars.store(result, variable)
         assert(value.type.isUnit())
@@ -1710,7 +1716,7 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
         return if (!value.symbol.owner.isStatic) {
             val thisPtr = evaluateExpression(value.receiver!!, null)
             functionGenerationContext.loadSlot(
-                    fieldPtrOfClass(thisPtr, value.symbol.owner), !value.symbol.owner.isFinal, resultSlot = resultSlot)
+                    fieldPtrOfClass(thisPtr, value.symbol.owner), !value.symbol.owner.isFinal, resultSlot)
         } else {
             assert(value.receiver == null)
             if (value.symbol.owner.correspondingPropertySymbol?.owner?.isConst == true) {
@@ -1722,7 +1728,7 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
                 val ptr = context.llvmDeclarations.forStaticField(value.symbol.owner).storageAddressAccess.getAddress(
                         functionGenerationContext
                 )
-                functionGenerationContext.loadSlot(ptr, !value.symbol.owner.isFinal, resultSlot = resultSlot)
+                functionGenerationContext.loadSlot(ptr, !value.symbol.owner.isFinal, resultSlot)
             }
         }.also {
             if (value.type.classifierOrNull?.isClassWithFqName(vectorType) == true)
@@ -2121,7 +2127,7 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
 
         updateBuilderDebugLocation(value)
         return when (value) {
-            is IrDelegatingConstructorCall -> delegatingConstructorCall(value.symbol.owner, args, resultSlot)
+            is IrDelegatingConstructorCall -> delegatingConstructorCall(value.symbol.owner, args)
             is IrConstructorCall -> evaluateConstructorCall(value, args, resultSlot)
             else -> evaluateFunctionCall(value as IrCall, args, resultLifetime(value), resultSlot)
         }
@@ -2677,7 +2683,7 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
 
     //-------------------------------------------------------------------------//
 
-    private fun delegatingConstructorCall(constructor: IrConstructor, args: List<LLVMValueRef>, resultSlot: LLVMValueRef?): LLVMValueRef {
+    private fun delegatingConstructorCall(constructor: IrConstructor, args: List<LLVMValueRef>): LLVMValueRef {
 
         val constructedClass = functionGenerationContext.constructedClass!!
         val thisPtr = currentCodeContext.genGetValue(constructedClass.thisReceiver!!, null)
@@ -2696,7 +2702,7 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
         }
 
         return callDirect(constructor, listOf(thisPtrArg) + args,
-                Lifetime.IRRELEVANT /* no value returned */, resultSlot)
+                Lifetime.IRRELEVANT /* no value returned */, null)
     }
 
     //-------------------------------------------------------------------------//
