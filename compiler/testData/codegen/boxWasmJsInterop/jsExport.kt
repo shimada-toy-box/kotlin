@@ -1,3 +1,4 @@
+// IGNORE_BACKEND: JS_IR, JS
 // MODULE: main
 // FILE: externals.kt
 
