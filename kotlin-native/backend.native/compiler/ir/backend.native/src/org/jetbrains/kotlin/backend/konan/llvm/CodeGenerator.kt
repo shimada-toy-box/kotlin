@@ -459,6 +459,7 @@ internal abstract class FunctionGenerationContext(
     val constructedClass: IrClass?
         get() = (irFunction as? IrConstructor)?.constructedClass
     var returnSlot: LLVMValueRef? = null
+        private set
     private var slotsPhi: LLVMValueRef? = null
     private val frameOverlaySlotCount =
             (LLVMStoreSizeOfType(llvmTargetData, runtime.frameOverlayType) / runtime.pointerSize).toInt()
