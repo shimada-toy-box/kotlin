@@ -121,49 +121,46 @@ enum class WasmLoaderKind {
 }
 
 fun generateJsWasmLoader(kind: WasmLoaderKind, wasmFilePath: String, externalJs: String): String {
-    val imports =
-        if (kind == WasmLoaderKind.NODE)
-            """
-                import { readFileSync } from 'fs';
-                import { resolve } from 'path';
-            """.trimIndent()
-        else
-            ""
-
     val instantiation = when (kind) {
         WasmLoaderKind.D8 ->
             """
                 const wasmModule = new WebAssembly.Module(read('$wasmFilePath', 'binary'));
-                const instance = new WebAssembly.Instance(wasmModule, { js_code });
+                const wasmInstance = new WebAssembly.Instance(wasmModule, { js_code });
             """.trimIndent()
 
         WasmLoaderKind.NODE ->
             """
-                const wasmBuffer = readFileSync(new URL('$wasmFilePath', import.meta.url));
-                const { instance } = await WebAssembly.instantiate(wasmBuffer, { js_code });
+                const fs = require('fs');
+                var path = require('path');
+                const wasmBuffer = fs.readFileSync(path.resolve(__dirname, './$wasmFilePath'));
+                const wasmModule = new WebAssembly.Module(wasmBuffer);
+                const wasmInstance = new WebAssembly.Instance(wasmModule, { js_code });
             """.trimIndent()
 
         WasmLoaderKind.BROWSER ->
             """
-                const { instance } = await WebAssembly.instantiateStreaming(fetch("$wasmFilePath"), { js_code });
+                const { wasmInstance } = await WebAssembly.instantiateStreaming(fetch("$wasmFilePath"), { js_code });
             """.trimIndent()
     }
 
     val init =
         """
             
-            const { exports } = instance;
-            exports.__init();
-            exports.startUnitTests?.();
-        """.trimIndent()
-
-    val export =
-        """
+            const wasmExports = wasmInstance.exports;
+            wasmExports.__init();
+            wasmExports.startUnitTests?.();
             
-            export default exports;
         """.trimIndent()
 
-    return imports + externalJs + instantiation + init + export
+    val export = when (kind) {
+        WasmLoaderKind.D8, WasmLoaderKind.BROWSER ->
+            "export default wasmExports;\n"
+
+        WasmLoaderKind.NODE ->
+            "module.exports = wasmExports;\n"
+    }
+
+    return externalJs + instantiation + init + export
 }
 
 fun writeCompilationResult(
