@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.tokens.ValidityToken
 import org.jetbrains.kotlin.analysis.api.types.KtSubstitutor
 import org.jetbrains.kotlin.analysis.api.withValidityAssertion
-import org.jetbrains.kotlin.analysis.low.level.api.fir.api.LowLevelFirApiFacadeForResolveOnAir.getTowerContextProvider
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getOrBuildFir
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getOrBuildFirFile
 import org.jetbrains.kotlin.diagnostics.KtDiagnostic
@@ -640,15 +639,20 @@ internal class KtFirCallResolver(
     override fun resolveCandidates(psi: KtElement): List<KtCallInfo> = withValidityAssertion {
         val firCall = when (val fir = psi.getOrBuildFir(firResolveState)) {
             is FirFunctionCall -> fir
-            is FirSafeCallExpression -> fir.regularQualifiedAccess.safeAs<FirFunctionCall>()
+            is FirSafeCallExpression -> fir.selector.safeAs<FirFunctionCall>()
             // TODO: FirDelegatedConstructorColl, FirAnnotationCall, FirArrayOfCall, FirConstructor
             else -> null
         } ?: return@withValidityAssertion emptyList()
-        val firFile = psi.containingKtFile.getOrBuildFirFile(firResolveState)
-        AllCandidatesResolver(analysisSession.rootModuleSession, firFile).getAllCandidates(firCall, psi)
+        val ktFile = psi.containingKtFile
+        val firFile = ktFile.getOrBuildFirFile(firResolveState)
+        AllCandidatesResolver(analysisSession.rootModuleSession, firFile, ktFile).getAllCandidates(firCall, psi)
     }
 
-    private inner class AllCandidatesResolver(private val firSession: FirSession, private val firFile: FirFile) {
+    private inner class AllCandidatesResolver(
+        private val firSession: FirSession,
+        private val firFile: FirFile,
+        private val ktFile: KtFile
+    ) {
         private val scopeSession = ScopeSession()
 
         // TODO: This transformer is not intended for actual transformations and created here only to simplify access to call resolver
@@ -671,7 +675,7 @@ internal class KtFirCallResolver(
 
         @OptIn(PrivateForInline::class)
         fun getAllCandidates(functionCall: FirFunctionCall, element: KtElement): List<KtCallInfo> {
-            val towerContext = firResolveState.getTowerContextProvider().getClosestAvailableParentContext(element)
+            val towerContext = firResolveState.getTowerContextProvider(ktFile).getClosestAvailableParentContext(element)
             towerContext?.let { bodyResolveComponents.context.replaceTowerDataContext(it) }
             // Note: All candidate symbols should have the same name
             val name =
