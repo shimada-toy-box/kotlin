@@ -176,8 +176,7 @@ class FunctionCodegen(private val irFunction: IrFunction, private val classCodeg
                         else -> Opcodes.ACC_FINAL
                     }
                     Modality.ABSTRACT -> Opcodes.ACC_ABSTRACT
-                    // TODO transform interface modality on lowering to DefaultImpls
-                    else -> if (parentAsClass.isJvmInterface && body == null) Opcodes.ACC_ABSTRACT else 0
+                    else -> 0
                 }
             }
         val isSynthetic = origin.isSynthetic ||

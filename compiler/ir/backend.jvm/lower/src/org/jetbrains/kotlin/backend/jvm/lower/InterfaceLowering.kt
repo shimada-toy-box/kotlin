@@ -152,8 +152,7 @@ internal class InterfaceLowering(val context: JvmBackendContext) : IrElementTran
                     val defaultImpl = createDefaultImpl(function)
                     defaultImpl.body = function.moveBodyTo(defaultImpl)
                     function.body = null
-                    function.modality
-                    //TODO reset modality to abstract
+                    function.modality = Modality.ABSTRACT
                 }
 
                 /**
