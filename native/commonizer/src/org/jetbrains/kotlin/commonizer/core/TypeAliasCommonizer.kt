@@ -41,39 +41,43 @@ class TypeAliasCommonizer(
             underlyingType = underlyingType,
             expandedType = underlyingType.expandedType(),
             annotations = listOfNotNull(
-                createUnsafeNumberAnnotationIfNecessary(classifiers.classifierIndices.targets, settings, values)
+                createUnsafeNumberAnnotationIfNecessary(classifiers.classifierIndices.targets, settings, values) {
+                    expandedType.classifierId
+                }
             )
         )
     }
 }
 
-private fun createUnsafeNumberAnnotationIfNecessary(
+internal fun <T : CirHasAnnotations> createUnsafeNumberAnnotationIfNecessary(
     targets: List<CommonizerTarget>,
     settings: CommonizerSettings,
-    values: List<CirTypeAlias>,
+    values: List<T>,
+    getIdOfPotentiallyUnsafeType: T.() -> CirEntityId?,
 ): CirAnnotation? {
     val isOptimisticCommonizationEnabled = settings.getSetting(OptimisticNumberCommonizationEnabledKey)
 
     if (!isOptimisticCommonizationEnabled)
         return null
 
-    val expandedTypes = values.map { it.expandedType.classifierId }
+    val typeIds = values.map { annotated -> annotated.getIdOfPotentiallyUnsafeType() }
 
     // All typealias have to be potentially substitutable (aka have to be some kind of number type)
-    if (!expandedTypes.all { OptimisticNumbersTypeCommonizer.isOptimisticallySubstitutable(it) }) {
+    if (!typeIds.all { it != null && OptimisticNumbersTypeCommonizer.isOptimisticallySubstitutable(it) }) {
         return null
     }
 
     val actualPlatformTypes = mutableMapOf<String, CirEntityId>()
-    values.forEachIndexed forEach@{ index, ta ->
-        val existingAnnotation = ta.annotations.firstIsInstanceOrNull<UnsafeNumberAnnotation>()
+    values.forEachIndexed forEach@{ index, annotated ->
+        val existingAnnotation = annotated.annotations.firstIsInstanceOrNull<UnsafeNumberAnnotation>()
         if (existingAnnotation != null) {
             actualPlatformTypes.putAll(existingAnnotation.actualPlatformTypes)
             return@forEach
         }
 
         targets[index].allLeaves().forEach { target ->
-            actualPlatformTypes[target.name] = ta.expandedType.classifierId
+            actualPlatformTypes[target.name] = annotated.getIdOfPotentiallyUnsafeType()
+                ?: throw IllegalStateException("Expect class or type alias type")
         }
     }
 

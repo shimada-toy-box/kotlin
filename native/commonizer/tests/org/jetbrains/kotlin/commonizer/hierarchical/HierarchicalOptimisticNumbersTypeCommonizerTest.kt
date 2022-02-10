@@ -707,12 +707,18 @@ class HierarchicalOptimisticNumbersTypeCommonizerTest : AbstractInlineSourcesCom
         val result = commonize {
             outputTarget("(a, b)")
             setting(OptimisticNumberCommonizationEnabledKey, true)
+            registerFakeStdlibIntegersDependency("(a, b)")
             registerDependency("a", "b", "(a, b)") { unsignedIntegers() }
             simpleSingleSourceTarget("a", "val x: UInt = null!!")
             simpleSingleSourceTarget("b", "val x: ULong = null!!")
         }
 
-        result.assertCommonized("(a, b)", "expect val x: kotlin.UInt")
+        result.assertCommonized(
+            "(a, b)", """
+            @UnsafeNumber(["a: kotlin.UInt", "b: kotlin.ULong"])
+            expect val x: kotlin.UInt
+            """.trimIndent()
+        )
     }
 
     fun `test property with aliased number return type`() {
