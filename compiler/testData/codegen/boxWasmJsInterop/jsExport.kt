@@ -28,7 +28,7 @@ fun box(): String = "OK"
 
 // TODO: Rewrite test to use module system
 
-@JsFun("() => { globalThis.main = exports; }")
+@JsFun("() => { globalThis.main = wasmExports; }")
 external fun hackNonModuleExport()
 
 fun main() {
