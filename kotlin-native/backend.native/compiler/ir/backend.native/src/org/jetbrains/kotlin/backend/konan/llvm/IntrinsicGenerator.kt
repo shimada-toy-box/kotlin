@@ -114,7 +114,7 @@ internal interface IntrinsicGeneratorEnvironment {
 
     fun calculateLifetime(element: IrElement): Lifetime
 
-    fun evaluateCall(function: IrFunction, args: List<LLVMValueRef>, resultLifetime: Lifetime, superClass: IrClass? = null): LLVMValueRef
+    fun evaluateCall(function: IrFunction, args: List<LLVMValueRef>, resultLifetime: Lifetime, superClass: IrClass?, resultSlot: LLVMValueRef?): LLVMValueRef
 
     fun evaluateExplicitArgs(expression: IrFunctionAccessExpression): List<LLVMValueRef>
 
@@ -158,7 +158,7 @@ internal class IntrinsicGenerator(private val environment: IntrinsicGeneratorEnv
      * So this method looks at [callSite] and if it is call to "special" intrinsic
      * processes it. Otherwise it returns null.
      */
-    fun tryEvaluateSpecialCall(callSite: IrFunctionAccessExpression): LLVMValueRef? {
+    fun tryEvaluateSpecialCall(callSite: IrFunctionAccessExpression, resultSlot: LLVMValueRef?): LLVMValueRef? {
         val function = callSite.symbol.owner
         if (!function.isTypedIntrinsic) {
             return null
@@ -179,7 +179,9 @@ internal class IntrinsicGenerator(private val environment: IntrinsicGeneratorEnv
                 environment.evaluateCall(
                         initializer.symbol.owner,
                         listOf(thiz) + environment.evaluateExplicitArgs(initializer),
-                        environment.calculateLifetime(initializer)
+                        environment.calculateLifetime(initializer),
+                        superClass = null,
+                        resultSlot = resultSlot
                 )
                 codegen.theUnitInstanceRef.llvm
             }
@@ -191,7 +193,8 @@ internal class IntrinsicGenerator(private val environment: IntrinsicGeneratorEnv
                 environment.evaluateCall(suspendFunction,
                         environment.evaluateExplicitArgs(suspendFunctionCall) + listOf(continuation),
                         environment.calculateLifetime(suspendFunctionCall),
-                        suspendFunction.parent as? IrClass // Call non-virtually.
+                        suspendFunction.parent as? IrClass, // Call non-virtually.
+                        resultSlot,
                 )
             }
             else -> null

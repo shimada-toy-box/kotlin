@@ -135,6 +135,8 @@ private interface CodeContext {
      */
     fun genReturn(target: IrSymbolOwner, value: LLVMValueRef?)
 
+    fun getReturnSlot(target: IrSymbolOwner) : LLVMValueRef?
+
     fun genBreak(destination: IrBreak)
 
     fun genContinue(destination: IrContinue)
@@ -230,8 +232,8 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
         override val stackLocalsManager: StackLocalsManager
             get() = currentCodeContext.stackLocalsManager
 
-        override fun evaluateCall(function: IrFunction, args: List<LLVMValueRef>, resultLifetime: Lifetime, superClass: IrClass?) =
-                evaluateSimpleFunctionCall(function, args, resultLifetime, superClass, null)
+        override fun evaluateCall(function: IrFunction, args: List<LLVMValueRef>, resultLifetime: Lifetime, superClass: IrClass?, resultSlot: LLVMValueRef?) =
+                evaluateSimpleFunctionCall(function, args, resultLifetime, superClass, resultSlot)
 
         override fun evaluateExplicitArgs(expression: IrFunctionAccessExpression): List<LLVMValueRef> =
                 this@CodeGeneratorVisitor.evaluateExplicitArgs(expression)
@@ -251,6 +253,8 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
         private fun unsupported(any: Any? = null): Nothing = throw UnsupportedOperationException(if (any is IrElement) any.render() else any?.toString() ?: "")
 
         override fun genReturn(target: IrSymbolOwner, value: LLVMValueRef?) = unsupported(target)
+
+        override fun getReturnSlot(target: IrSymbolOwner): LLVMValueRef? = unsupported(target)
 
         override fun genBreak(destination: IrBreak) = unsupported()
 
@@ -740,6 +744,14 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
             }
         }
 
+        override fun getReturnSlot(target: IrSymbolOwner) : LLVMValueRef? {
+            return if (declaration == null || target == declaration) {
+                functionGenerationContext.returnSlot
+            } else {
+                super.getReturnSlot(target)
+            }
+        }
+
         override val exceptionHandler: ExceptionHandler
             get() = ExceptionHandler.Caller
 
@@ -990,7 +1002,7 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
             is IrWhen                -> return evaluateWhen                   (value, resultSlot)
             is IrThrow               -> return evaluateThrow                  (value)
             is IrTry                 -> return evaluateTry                    (value)
-            is IrReturnableBlock     -> return evaluateReturnableBlock        (value)
+            is IrReturnableBlock     -> return evaluateReturnableBlock        (value, resultSlot)
             is IrContainerExpression -> return evaluateContainerExpression    (value, resultSlot)
             is IrWhileLoop           -> return evaluateWhileLoop              (value)
             is IrDoWhileLoop         -> return evaluateDoWhileLoop            (value)
@@ -1918,17 +1930,13 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
         val value = expression.value
         val target = expression.returnTargetSymbol.owner
 
-        val evaluated = evaluateExpression(value, functionGenerationContext.returnSlot.takeIf {
-            target == functionGenerationContext.irFunction
-        })
-
-
+        val evaluated = evaluateExpression(value, currentCodeContext.getReturnSlot(target))
         currentCodeContext.genReturn(target, evaluated)
         return codegen.kNothingFakeValue
     }
 
     //-------------------------------------------------------------------------//
-    private inner class ReturnableBlockScope(val returnableBlock: IrReturnableBlock) :
+    private inner class ReturnableBlockScope(val returnableBlock: IrReturnableBlock, val resultSlot: LLVMValueRef?) :
             FileScope(returnableBlock.inlineFunctionSymbol?.owner?.let {
                 context.specialDeclarationsFactory.loweredInlineFunctions[it]?.irFile ?: it.fileOrNull
             }
@@ -1973,6 +1981,14 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
 
             if (!returnableBlock.type.isUnit()) {                               // If function returns more then "unit"
                 functionGenerationContext.assignPhis(getResult() to value!!)                      // Assign return value to result PHI node.
+            }
+        }
+
+        override fun getReturnSlot(target: IrSymbolOwner) : LLVMValueRef? {
+            return if (target == returnableBlock) {
+                resultSlot
+            } else {
+                super.getReturnSlot(target)
             }
         }
 
@@ -2034,10 +2050,10 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
     }
 
     //-------------------------------------------------------------------------//
-    private fun evaluateReturnableBlock(value: IrReturnableBlock): LLVMValueRef {
+    private fun evaluateReturnableBlock(value: IrReturnableBlock, resultSlot: LLVMValueRef?): LLVMValueRef {
         context.log{"evaluateReturnableBlock         : ${value.statements.forEach { ir2string(it) }}"}
 
-        val returnableBlockScope = ReturnableBlockScope(value)
+        val returnableBlockScope = ReturnableBlockScope(value, resultSlot)
         generateDebugTrambolineIf("inline", value)
         using(returnableBlockScope) {
             using(VariableScope()) {
@@ -2099,7 +2115,7 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
     private fun evaluateCall(value: IrFunctionAccessExpression, resultSlot: LLVMValueRef?): LLVMValueRef {
         context.log{"evaluateCall                   : ${ir2string(value)}"}
 
-        intrinsicGenerator.tryEvaluateSpecialCall(value)?.let { return it }
+        intrinsicGenerator.tryEvaluateSpecialCall(value, resultSlot)?.let { return it }
 
         val args = evaluateExplicitArgs(value)
 
