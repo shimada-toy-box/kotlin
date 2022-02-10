@@ -66,7 +66,7 @@ class IrPropertyImpl(
     override val symbol: IrPropertySymbol,
     name: Name,
     visibility: DescriptorVisibility,
-    override val modality: Modality,
+    override var modality: Modality,
     isVar: Boolean,
     isConst: Boolean,
     isLateinit: Boolean,

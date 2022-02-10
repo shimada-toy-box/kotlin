@@ -83,8 +83,7 @@ class Fir2IrLazyProperty(
             error("Mutating Fir2Ir lazy elements is not possible")
         }
 
-    override val modality: Modality
-        get() = fir.modality!!
+    override var modality: Modality = fir.modality!!
 
     private val type: IrType by lazy {
         with(typeConverter) { fir.returnTypeRef.toIrType() }

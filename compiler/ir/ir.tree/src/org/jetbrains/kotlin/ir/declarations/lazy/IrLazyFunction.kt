@@ -33,7 +33,7 @@ class IrLazyFunction(
     override val descriptor: FunctionDescriptor,
     override val name: Name,
     override var visibility: DescriptorVisibility,
-    override val modality: Modality,
+    override var modality: Modality,
     override val isInline: Boolean,
     override val isExternal: Boolean,
     override val isTailrec: Boolean,

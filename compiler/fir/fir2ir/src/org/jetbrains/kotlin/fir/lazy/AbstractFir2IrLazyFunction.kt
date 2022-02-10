@@ -74,8 +74,7 @@ abstract class AbstractFir2IrLazyFunction<F : FirCallableDeclaration>(
         components.visibilityConverter.convertToDescriptorVisibility(fir.visibility)
     }
 
-    override val modality: Modality
-        get() = fir.modality!!
+    override var modality: Modality = fir.modality!!
 
     override var correspondingPropertySymbol: IrPropertySymbol? = null
 

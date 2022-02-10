@@ -75,7 +75,7 @@ class IrFunctionImpl(
     override val symbol: IrSimpleFunctionSymbol,
     name: Name,
     visibility: DescriptorVisibility,
-    override val modality: Modality,
+    override var modality: Modality,
     returnType: IrType,
     isInline: Boolean,
     isExternal: Boolean,
