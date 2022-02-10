@@ -8,6 +8,8 @@ package org.jetbrains.kotlin.ir.types
 import org.jetbrains.kotlin.ir.declarations.IrAnnotationContainer
 import org.jetbrains.kotlin.ir.symbols.IrClassifierSymbol
 import org.jetbrains.kotlin.ir.symbols.IrTypeAliasSymbol
+import org.jetbrains.kotlin.ir.types.impl.IrTypeBase
+import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.types.model.*
 
@@ -26,24 +28,23 @@ interface IrType : KotlinTypeMarker, IrAnnotationContainer {
     override fun hashCode(): Int
 }
 
-interface IrErrorType : IrType
+abstract class IrErrorType(kotlinType: KotlinType?) : IrTypeBase(kotlinType)
 
-interface IrDynamicType : IrType, DynamicTypeMarker
+abstract class IrDynamicType(kotlinType: KotlinType?) : IrTypeBase(kotlinType), DynamicTypeMarker
 
-interface IrDefinitelyNotNullType : IrType, DefinitelyNotNullTypeMarker {
-    val original: IrType
+abstract class IrDefinitelyNotNullType(kotlinType: KotlinType?) : IrTypeBase(kotlinType), DefinitelyNotNullTypeMarker {
+    abstract val original: IrType
 }
 
-interface IrSimpleType : IrType, SimpleTypeMarker, TypeArgumentListMarker {
-    val classifier: IrClassifierSymbol
-    val hasQuestionMark: Boolean
-    val arguments: List<IrTypeArgument>
-    val abbreviation: IrTypeAbbreviation?
+abstract class IrSimpleType(kotlinType: KotlinType?) : IrTypeBase(kotlinType), SimpleTypeMarker, TypeArgumentListMarker {
+    abstract val classifier: IrClassifierSymbol
+    abstract val hasQuestionMark: Boolean
+    abstract val arguments: List<IrTypeArgument>
+    abstract val abbreviation: IrTypeAbbreviation?
 }
 
 interface IrTypeArgument : TypeArgumentMarker {
     override fun equals(other: Any?): Boolean
-
     override fun hashCode(): Int
 }
 

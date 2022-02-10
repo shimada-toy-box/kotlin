@@ -25,7 +25,7 @@ class IrErrorTypeImpl(
     kotlinType: KotlinType?,
     override val annotations: List<IrConstructorCall>,
     override val variance: Variance,
-) : IrTypeBase(kotlinType), IrErrorType {
+) : IrErrorType(kotlinType) {
     override fun equals(other: Any?): Boolean = other is IrErrorTypeImpl
 
     override fun hashCode(): Int = IrErrorTypeImpl::class.java.hashCode()
@@ -35,7 +35,7 @@ class IrDynamicTypeImpl(
     kotlinType: KotlinType?,
     override val annotations: List<IrConstructorCall>,
     override val variance: Variance,
-) : IrTypeBase(kotlinType), IrDynamicType {
+) : IrDynamicType(kotlinType) {
     override fun equals(other: Any?): Boolean = other is IrDynamicTypeImpl
 
     override fun hashCode(): Int = IrDynamicTypeImpl::class.java.hashCode()
@@ -81,7 +81,10 @@ class IrCapturedType(
     val lowerType: IrType?,
     projection: IrTypeArgument,
     typeParameter: IrTypeParameter
-) : IrSimpleType, CapturedTypeMarker {
+) : IrSimpleType(null), CapturedTypeMarker {
+
+    override val variance: Variance
+        get() = TODO("Not yet implemented")
 
     class Constructor(val argument: IrTypeArgument, val typeParameter: IrTypeParameter) :
         CapturedTypeConstructorMarker {
